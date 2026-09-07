@@ -18,7 +18,7 @@ audit system.
 - **Later client:** a focused Flutter Android/iOS patient application using the
   same API
 
-Two secure vertical slices are implemented. A seeded patient can sign in,
+Five secure vertical slices are implemented. A seeded patient can sign in,
 maintain an SQL-backed emergency profile, grant a doctor time-limited read-only
 access, revoke it, and inspect the resulting access history. The doctor sees
 only currently authorized snapshots, and every opened snapshot is audited.
@@ -43,20 +43,37 @@ Implemented at checkpoint 02:
 - grant, view, and revoke audit history visible to the patient;
 - normalized SQL grant/audit tables and end-to-end authorization tests.
 
-Break-glass access, clinical encounters, QR access, passkeys, documents, AI,
-and deployment are later milestones, not finished features.
+Implemented at checkpoints 03 and 04:
+
+- doctor break-glass access with a required reason, a 15-minute limit, rate
+  limiting, and patient-visible auditing;
+- append-only doctor clinical encounters with structured vital observations
+  and prescriptions;
+- read-only patient and doctor clinical timelines linked to the exact access
+  grant used.
+
+Implemented at checkpoint 05:
+
+- a real five-minute, one-use Medical ID QR link issued by the server;
+- hash-only QR-token persistence and explicit unused-token revocation;
+- authenticated doctor redemption into 15 minutes of audited access;
+- automatic doctor redemption after the QR opens the Flutter web application.
+
+The functional administrator module, passkeys, documents, AI, and production
+deployment are later milestones, not finished features.
 
 ## Start here
 
 1. Use the [checkpoint 01 runbook](docs/DEVELOPMENT_CHECKPOINT_01.md) to run
    and verify the working system.
 2. Demonstrate the [checkpoint 02 access workflow](docs/DEVELOPMENT_CHECKPOINT_02.md).
-3. Review the [recommended architecture](docs/ARCHITECTURE.md).
-4. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
-4. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
-5. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
+3. Demonstrate the [checkpoint 05 secure QR workflow](docs/DEVELOPMENT_CHECKPOINT_05.md).
+4. Review the [recommended architecture](docs/ARCHITECTURE.md).
+5. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
+6. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
+7. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
    correct medical project-description document.
-6. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) for
+8. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) for
    the later, optional milestone.
 
 ## Run locally

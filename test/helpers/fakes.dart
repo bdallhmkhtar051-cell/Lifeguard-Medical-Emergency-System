@@ -170,8 +170,14 @@ class FakePatientProfileRepository implements PatientProfileRepository {
 }
 
 class FakeAccessRepository implements AccessRepository {
+  FakeAccessRepository({this.qrAccess});
+
+  final DoctorAccess? qrAccess;
   int grantCalls = 0;
   int revokeCalls = 0;
+  int qrIssueCalls = 0;
+  int qrRevokeCalls = 0;
+  String? redeemedQrToken;
   final doctor = const DoctorOption(
     id: 'doctor-user-id',
     name: 'Dr. Ali Hassan',
@@ -200,6 +206,20 @@ class FakeAccessRepository implements AccessRepository {
   }
 
   @override
+  Future<MedicalQrAccess> issueMedicalQr() async {
+    qrIssueCalls++;
+    return MedicalQrAccess(
+      token: 'test-medical-qr-token-value-1234567890',
+      expiresAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
+    );
+  }
+
+  @override
+  Future<void> revokeMedicalQr() async {
+    qrRevokeCalls++;
+  }
+
+  @override
   Future<List<DoctorAccess>> doctorAccess() async => const [];
 
   @override
@@ -212,8 +232,22 @@ class FakeAccessRepository implements AccessRepository {
   }) => throw StateError('No fake break-glass access configured.');
 
   @override
-  Future<DoctorSnapshot> doctorSnapshot(String grantId) =>
-      throw StateError('No fake snapshot configured.');
+  Future<DoctorAccess> redeemMedicalQr(String token) async {
+    redeemedQrToken = token;
+    return qrAccess ??
+        (throw StateError('No fake Medical ID QR access configured.'));
+  }
+
+  @override
+  Future<DoctorSnapshot> doctorSnapshot(String grantId) async {
+    final access = qrAccess;
+    if (access == null) throw StateError('No fake snapshot configured.');
+    return DoctorSnapshot(
+      expiresAt: access.expiresAt,
+      profile: sampleProfile,
+      accessType: access.accessType,
+    );
+  }
 }
 
 class FakeClinicalRepository implements ClinicalRepository {

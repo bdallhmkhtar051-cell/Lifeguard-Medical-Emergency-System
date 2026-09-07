@@ -14,6 +14,7 @@ class HomeShell extends StatelessWidget {
     required this.patientProfileRepository,
     required this.accessRepository,
     required this.clinicalRepository,
+    this.initialMedicalQrToken,
     super.key,
   });
 
@@ -21,6 +22,7 @@ class HomeShell extends StatelessWidget {
   final PatientProfileRepository patientProfileRepository;
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
+  final String? initialMedicalQrToken;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,7 @@ class HomeShell extends StatelessWidget {
               repository: accessRepository,
               clinicalRepository: clinicalRepository,
               user: user,
+              initialMedicalQrToken: initialMedicalQrToken,
             )
           : _RoleLanding(user: user),
     );

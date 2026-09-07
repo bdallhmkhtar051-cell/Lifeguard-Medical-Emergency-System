@@ -7,6 +7,12 @@ public sealed record GrantEmergencyAccessRequest(string? DoctorEmail, int Durati
 
 public sealed record BreakGlassAccessRequest(Guid PatientProfileId, string? Reason);
 
+public sealed record RedeemMedicalQrRequest(string? Token);
+
+public sealed record MedicalQrIssueResponse(
+    string Token,
+    DateTimeOffset ExpiresAtUtc);
+
 public sealed record DoctorPatientDirectoryResponse(Guid PatientProfileId, string PatientName);
 
 public sealed record DoctorOptionResponse(Guid UserId, string DisplayName, string Email);

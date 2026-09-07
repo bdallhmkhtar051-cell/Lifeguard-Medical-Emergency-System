@@ -6,18 +6,22 @@ abstract interface class AccessRepository {
   Future<PatientAccessDashboard> patientDashboard();
   Future<void> grant({required String doctorEmail, required int minutes});
   Future<void> revoke(String grantId);
+  Future<MedicalQrAccess> issueMedicalQr();
+  Future<void> revokeMedicalQr();
   Future<List<DoctorAccess>> doctorAccess();
   Future<List<DoctorPatient>> doctorDirectory();
   Future<DoctorAccess> breakGlass({
     required String patientProfileId,
     required String reason,
   });
+  Future<DoctorAccess> redeemMedicalQr(String token);
   Future<DoctorSnapshot> doctorSnapshot(String grantId);
 }
 
 class ApiAccessRepository implements AccessRepository {
   ApiAccessRepository(this._api);
   static const _patientPath = '/api/v1/patients/me/emergency-access';
+  static const _patientQrPath = '/api/v1/patients/me/medical-qr';
   static const _doctorPath = '/api/v1/doctors/emergency-access';
   final ApiClient _api;
 
@@ -46,6 +50,22 @@ class ApiAccessRepository implements AccessRepository {
   @override
   Future<void> revoke(String grantId) async {
     await _api.postJson('$_patientPath/$grantId/revoke');
+  }
+
+  @override
+  Future<MedicalQrAccess> issueMedicalQr() async {
+    try {
+      return MedicalQrAccess.fromJson(
+        (await _api.postJson(_patientQrPath)).requireObject(),
+      );
+    } on FormatException {
+      throw const ApiException.protocol();
+    }
+  }
+
+  @override
+  Future<void> revokeMedicalQr() async {
+    await _api.postJson('$_patientQrPath/revoke');
   }
 
   @override
@@ -86,6 +106,20 @@ class ApiAccessRepository implements AccessRepository {
         (await _api.postJson(
           '$_doctorPath/break-glass',
           body: {'patientProfileId': patientProfileId, 'reason': reason},
+        )).requireObject(),
+      );
+    } on FormatException {
+      throw const ApiException.protocol();
+    }
+  }
+
+  @override
+  Future<DoctorAccess> redeemMedicalQr(String token) async {
+    try {
+      return DoctorAccess.fromJson(
+        (await _api.postJson(
+          '$_doctorPath/medical-qr/redeem',
+          body: {'token': token},
         )).requireObject(),
       );
     } on FormatException {

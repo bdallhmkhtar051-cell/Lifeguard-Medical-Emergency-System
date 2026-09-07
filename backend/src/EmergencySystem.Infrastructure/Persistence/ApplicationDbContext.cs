@@ -26,6 +26,8 @@ public sealed class ApplicationDbContext(
 
     public DbSet<AccessAuditEvent> AccessAuditEvents => Set<AccessAuditEvent>();
 
+    public DbSet<MedicalQrToken> MedicalQrTokens => Set<MedicalQrToken>();
+
     public DbSet<ClinicalEncounter> ClinicalEncounters => Set<ClinicalEncounter>();
 
     public DbSet<ClinicalObservation> ClinicalObservations => Set<ClinicalObservation>();

@@ -333,6 +333,114 @@ public sealed class ApiIntegrationTests
     }
 
     [Fact]
+    public async Task Patient_qr_creates_one_use_audited_doctor_access()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var patientClient = CreateClient(factory);
+        using var doctorClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+        await LoginAsync(doctorClient, EmergencySystemApiFactory.DoctorEmail);
+
+        var issueResponse = await patientClient.PostAsync(
+            "/api/v1/patients/me/medical-qr", null);
+        var issued = await issueResponse.Content
+            .ReadFromJsonAsync<MedicalQrIssueResponse>(JsonOptions);
+
+        Assert.Equal(HttpStatusCode.OK, issueResponse.StatusCode);
+        Assert.NotNull(issued);
+        Assert.InRange(
+            issued.ExpiresAtUtc,
+            DateTimeOffset.UtcNow.AddMinutes(4),
+            DateTimeOffset.UtcNow.AddMinutes(6));
+        using (var scope = factory.Services.CreateScope())
+        {
+            var stored = await scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>()
+                .MedicalQrTokens.AsNoTracking().SingleAsync();
+            Assert.NotEqual(issued.Token, stored.TokenHash);
+            Assert.Equal(64, stored.TokenHash.Length);
+        }
+
+        var redeemResponse = await doctorClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/redeem",
+            new RedeemMedicalQrRequest(issued.Token),
+            JsonOptions);
+        var access = await redeemResponse.Content
+            .ReadFromJsonAsync<DoctorAccessResponse>(JsonOptions);
+
+        Assert.Equal(HttpStatusCode.OK, redeemResponse.StatusCode);
+        Assert.NotNull(access);
+        Assert.Equal(EmergencyAccessType.QrConsented, access.AccessType);
+
+        var snapshotResponse = await doctorClient.GetAsync(
+            $"/api/v1/doctors/emergency-access/{access.GrantId}/snapshot");
+        Assert.Equal(HttpStatusCode.OK, snapshotResponse.StatusCode);
+
+        var replayResponse = await doctorClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/redeem",
+            new RedeemMedicalQrRequest(issued.Token),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.NotFound, replayResponse.StatusCode);
+
+        var dashboard = await patientClient
+            .GetFromJsonAsync<PatientAccessDashboardResponse>(
+                "/api/v1/patients/me/emergency-access", JsonOptions);
+        Assert.Contains(
+            dashboard!.AuditHistory,
+            item => item.Action == AccessAuditAction.QrRedeemed);
+    }
+
+    [Fact]
+    public async Task Patient_can_revoke_an_unused_medical_qr()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var patientClient = CreateClient(factory);
+        using var doctorClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+        await LoginAsync(doctorClient, EmergencySystemApiFactory.DoctorEmail);
+
+        var issued = await patientClient.PostAsJsonAsync<object>(
+            "/api/v1/patients/me/medical-qr", new { }, JsonOptions);
+        var qr = await issued.Content.ReadFromJsonAsync<MedicalQrIssueResponse>(
+            JsonOptions);
+        Assert.NotNull(qr);
+
+        var revoke = await patientClient.PostAsync(
+            "/api/v1/patients/me/medical-qr/revoke", null);
+        Assert.Equal(HttpStatusCode.NoContent, revoke.StatusCode);
+
+        var redeem = await doctorClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/redeem",
+            new RedeemMedicalQrRequest(qr.Token),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.NotFound, redeem.StatusCode);
+    }
+
+    [Fact]
+    public async Task Medical_qr_endpoints_enforce_patient_and_doctor_roles()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var patientClient = CreateClient(factory);
+        using var doctorClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+        await LoginAsync(doctorClient, EmergencySystemApiFactory.DoctorEmail);
+
+        var doctorIssue = await doctorClient.PostAsync(
+            "/api/v1/patients/me/medical-qr", null);
+        Assert.Equal(HttpStatusCode.Forbidden, doctorIssue.StatusCode);
+
+        var patientRedeem = await patientClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/redeem",
+            new RedeemMedicalQrRequest(
+                "valid-shaped-but-unauthorized-medical-qr-token-value"),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.Forbidden, patientRedeem.StatusCode);
+    }
+
+    [Fact]
     public async Task Doctor_can_create_clinical_record_during_access_and_patient_can_read_it()
     {
         using var factory = new EmergencySystemApiFactory();

@@ -15,12 +15,14 @@ class PatientMedicalIdHeader extends StatelessWidget {
     required this.profile,
     required this.onEdit,
     required this.onRefresh,
+    required this.onDisplayQr,
     super.key,
   });
 
   final EmergencyProfile profile;
   final VoidCallback onEdit;
   final VoidCallback onRefresh;
+  final VoidCallback onDisplayQr;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +79,11 @@ class PatientMedicalIdHeader extends StatelessWidget {
                     const SizedBox(height: 20),
                     _Summary(profile: profile),
                     const SizedBox(height: 16),
-                    _Actions(profile: profile, onRefresh: onRefresh),
+                    _Actions(
+                      profile: profile,
+                      onRefresh: onRefresh,
+                      onDisplayQr: onDisplayQr,
+                    ),
                   ],
                 ),
               ),
@@ -212,10 +218,15 @@ class _Summary extends StatelessWidget {
 }
 
 class _Actions extends StatelessWidget {
-  const _Actions({required this.profile, required this.onRefresh});
+  const _Actions({
+    required this.profile,
+    required this.onRefresh,
+    required this.onDisplayQr,
+  });
 
   final EmergencyProfile profile;
   final VoidCallback onRefresh;
+  final VoidCallback onDisplayQr;
 
   @override
   Widget build(BuildContext context) {
@@ -253,10 +264,7 @@ class _Actions extends StatelessWidget {
               icon: Icons.qr_code_2,
               color: _blue,
               borderColor: const Color(0x665B9CF6),
-              onTap: () => _notice(
-                context,
-                'Secure Medical ID QR is scheduled after access control.',
-              ),
+              onTap: onDisplayQr,
             ),
             _ActionTile(
               eyebrow: 'Emergency',

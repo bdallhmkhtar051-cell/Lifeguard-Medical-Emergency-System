@@ -2,13 +2,29 @@ import '../patient_profile/emergency_profile.dart';
 
 enum EmergencyAccessKind {
   consented,
+  qrConsented,
   breakGlass;
 
   static EmergencyAccessKind fromJson(Object? value) => switch (value) {
     'Consented' => EmergencyAccessKind.consented,
+    'QrConsented' => EmergencyAccessKind.qrConsented,
     'BreakGlass' => EmergencyAccessKind.breakGlass,
     _ => throw const FormatException('Unknown emergency access type.'),
   };
+}
+
+/// Raw QR tokens are short-lived and kept only in memory while displayed.
+class MedicalQrAccess {
+  const MedicalQrAccess({required this.token, required this.expiresAt});
+
+  factory MedicalQrAccess.fromJson(Map<String, dynamic> json) =>
+      MedicalQrAccess(
+        token: json['token'].toString(),
+        expiresAt: DateTime.parse(json['expiresAtUtc'].toString()),
+      );
+
+  final String token;
+  final DateTime expiresAt;
 }
 
 class DoctorPatient {

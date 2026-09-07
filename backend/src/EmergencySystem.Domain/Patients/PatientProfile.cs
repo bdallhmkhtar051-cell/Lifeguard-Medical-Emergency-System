@@ -33,5 +33,7 @@ public sealed class PatientProfile
 
     public ICollection<EmergencyAccessGrant> AccessGrants { get; set; } = [];
 
+    public ICollection<MedicalQrToken> MedicalQrTokens { get; set; } = [];
+
     public ICollection<ClinicalEncounter> ClinicalEncounters { get; set; } = [];
 }

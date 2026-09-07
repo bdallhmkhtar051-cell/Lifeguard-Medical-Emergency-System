@@ -54,3 +54,35 @@ internal sealed class AccessAuditEventConfiguration
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+internal sealed class MedicalQrTokenConfiguration
+    : IEntityTypeConfiguration<MedicalQrToken>
+{
+    public void Configure(EntityTypeBuilder<MedicalQrToken> builder)
+    {
+        builder.ToTable("MedicalQrTokens");
+        builder.HasKey(item => item.Id);
+        builder.Property(item => item.TokenHash).HasMaxLength(64).IsRequired();
+        builder.Property(item => item.CreatedAtUtc).HasPrecision(0);
+        builder.Property(item => item.ExpiresAtUtc).HasPrecision(0);
+        builder.Property(item => item.RedeemedAtUtc).HasPrecision(0);
+        builder.Property(item => item.RevokedAtUtc).HasPrecision(0);
+        builder.Property(item => item.Version).IsConcurrencyToken();
+        builder.HasIndex(item => item.TokenHash).IsUnique();
+        builder.HasIndex(item => new { item.PatientProfileId, item.ExpiresAtUtc });
+        builder.HasIndex(item => item.EmergencyAccessGrantId).IsUnique();
+
+        builder.HasOne(item => item.PatientProfile)
+            .WithMany(profile => profile.MedicalQrTokens)
+            .HasForeignKey(item => item.PatientProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(item => item.RedeemedByDoctorUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(item => item.EmergencyAccessGrant)
+            .WithOne()
+            .HasForeignKey<MedicalQrToken>(item => item.EmergencyAccessGrantId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

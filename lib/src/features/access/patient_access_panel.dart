@@ -179,7 +179,11 @@ class _PatientAccessPanelState extends State<PatientAccessPanel> {
                     ),
                     title: Text(grant.doctorName),
                     subtitle: Text(
-                      '${grant.accessType == EmergencyAccessKind.breakGlass ? 'Emergency override' : 'Patient consent'} • '
+                      '${switch (grant.accessType) {
+                        EmergencyAccessKind.breakGlass => 'Emergency override',
+                        EmergencyAccessKind.qrConsented => 'Medical ID QR consent',
+                        EmergencyAccessKind.consented => 'Patient consent',
+                      }} • '
                       '${grant.active ? 'Active until' : 'Inactive'} ${_time(grant.expiresAt)}'
                       '${grant.emergencyReason == null ? '' : '\nReason: ${grant.emergencyReason}'}',
                     ),

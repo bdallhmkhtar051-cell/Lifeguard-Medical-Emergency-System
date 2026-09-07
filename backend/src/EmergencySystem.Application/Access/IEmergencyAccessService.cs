@@ -16,6 +16,14 @@ public interface IEmergencyAccessService
         Guid grantId,
         CancellationToken cancellationToken = default);
 
+    Task<MedicalQrIssueResponse?> IssueMedicalQrAsync(
+        Guid patientUserId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> RevokeMedicalQrAsync(
+        Guid patientUserId,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<DoctorAccessResponse>> GetDoctorAccessAsync(
         Guid doctorUserId,
         CancellationToken cancellationToken = default);
@@ -26,6 +34,11 @@ public interface IEmergencyAccessService
     Task<DoctorAccessResponse?> BreakGlassAsync(
         Guid doctorUserId,
         BreakGlassAccessRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<DoctorAccessResponse?> RedeemMedicalQrAsync(
+        Guid doctorUserId,
+        RedeemMedicalQrRequest request,
         CancellationToken cancellationToken = default);
 
     Task<DoctorEmergencySnapshotResponse?> GetDoctorSnapshotAsync(

@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using EmergencySystem.Application.Access;
 using EmergencySystem.Application.Common;
 using EmergencySystem.Domain.Access;
@@ -16,6 +18,8 @@ internal sealed class EmergencyAccessService(
     TimeProvider timeProvider) : IEmergencyAccessService
 {
     private const int BreakGlassDurationMinutes = 15;
+    private const int MedicalQrValidityMinutes = 5;
+    private const int MedicalQrAccessMinutes = 15;
 
     public async Task<PatientAccessDashboardResponse?> GetPatientDashboardAsync(
         Guid patientUserId,
@@ -135,6 +139,68 @@ internal sealed class EmergencyAccessService(
         return true;
     }
 
+    public async Task<MedicalQrIssueResponse?> IssueMedicalQrAsync(
+        Guid patientUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var profileId = await dbContext.PatientProfiles
+            .Where(item => item.UserId == patientUserId)
+            .Select(item => (Guid?)item.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (profileId is null) return null;
+
+        var now = timeProvider.GetUtcNow();
+        var previousTokens = await dbContext.MedicalQrTokens
+            .Where(item => item.PatientProfileId == profileId &&
+                           item.RedeemedAtUtc == null &&
+                           item.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+        foreach (var previous in previousTokens.Where(item => item.ExpiresAtUtc > now))
+        {
+            previous.RevokedAtUtc = now;
+            previous.Version = Guid.NewGuid();
+        }
+
+        var rawToken = CreateRawQrToken();
+        var expiresAt = now.AddMinutes(MedicalQrValidityMinutes);
+        dbContext.MedicalQrTokens.Add(new MedicalQrToken
+        {
+            Id = Guid.NewGuid(),
+            PatientProfileId = profileId.Value,
+            TokenHash = HashQrToken(rawToken),
+            CreatedAtUtc = now,
+            ExpiresAtUtc = expiresAt,
+            Version = Guid.NewGuid(),
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return new MedicalQrIssueResponse(rawToken, expiresAt);
+    }
+
+    public async Task<bool> RevokeMedicalQrAsync(
+        Guid patientUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var profileId = await dbContext.PatientProfiles
+            .Where(item => item.UserId == patientUserId)
+            .Select(item => (Guid?)item.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (profileId is null) return false;
+
+        var now = timeProvider.GetUtcNow();
+        var tokens = await dbContext.MedicalQrTokens
+            .Where(item => item.PatientProfileId == profileId &&
+                           item.RedeemedAtUtc == null &&
+                           item.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+        foreach (var token in tokens.Where(item => item.ExpiresAtUtc > now))
+        {
+            token.RevokedAtUtc = now;
+            token.Version = Guid.NewGuid();
+        }
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<IReadOnlyList<DoctorAccessResponse>> GetDoctorAccessAsync(
         Guid doctorUserId,
         CancellationToken cancellationToken = default)
@@ -230,6 +296,82 @@ internal sealed class EmergencyAccessService(
             grant.ExpiresAtUtc);
     }
 
+    public async Task<DoctorAccessResponse?> RedeemMedicalQrAsync(
+        Guid doctorUserId,
+        RedeemMedicalQrRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var rawToken = request.Token?.Trim();
+        if (string.IsNullOrWhiteSpace(rawToken) ||
+            rawToken.Length is < 32 or > 128 ||
+            rawToken.Any(character =>
+                !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_'))
+        {
+            throw new RequestValidationException(
+                new Dictionary<string, string[]> { ["token"] = ["Enter a valid Medical ID QR token."] });
+        }
+
+        await using var transaction = await dbContext.Database
+            .BeginTransactionAsync(cancellationToken);
+        var now = timeProvider.GetUtcNow();
+        var token = await dbContext.MedicalQrTokens
+            .Include(item => item.PatientProfile)
+            .SingleOrDefaultAsync(
+                item => item.TokenHash == HashQrToken(rawToken),
+                cancellationToken);
+        if (token is null || token.ExpiresAtUtc <= now ||
+            token.RevokedAtUtc is not null || token.RedeemedAtUtc is not null)
+        {
+            return null;
+        }
+
+        var possibleGrants = await dbContext.EmergencyAccessGrants
+            .Where(item => item.PatientProfileId == token.PatientProfileId &&
+                           item.DoctorUserId == doctorUserId &&
+                           item.RevokedAtUtc == null)
+            .ToListAsync(cancellationToken);
+        var grant = possibleGrants.FirstOrDefault(item => item.ExpiresAtUtc > now);
+        if (grant is null)
+        {
+            grant = new EmergencyAccessGrant
+            {
+                Id = Guid.NewGuid(),
+                PatientProfileId = token.PatientProfileId,
+                DoctorUserId = doctorUserId,
+                AccessType = EmergencyAccessType.QrConsented,
+                GrantedAtUtc = now,
+                ExpiresAtUtc = now.AddMinutes(MedicalQrAccessMinutes),
+            };
+            dbContext.EmergencyAccessGrants.Add(grant);
+        }
+
+        token.RedeemedAtUtc = now;
+        token.RedeemedByDoctorUserId = doctorUserId;
+        token.EmergencyAccessGrantId = grant.Id;
+        token.Version = Guid.NewGuid();
+        dbContext.AccessAuditEvents.Add(
+            NewAudit(grant.Id, doctorUserId, AccessAuditAction.QrRedeemed, now));
+
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return null;
+        }
+
+        return new DoctorAccessResponse(
+            grant.Id,
+            token.PatientProfileId,
+            token.PatientProfile.FullName,
+            grant.AccessType,
+            grant.EmergencyReason,
+            grant.ExpiresAtUtc);
+    }
+
     public async Task<DoctorEmergencySnapshotResponse?> GetDoctorSnapshotAsync(
         Guid doctorUserId,
         Guid grantId,
@@ -293,4 +435,13 @@ internal sealed class EmergencyAccessService(
             Action = action,
             OccurredAtUtc = now,
         };
+
+    private static string CreateRawQrToken()
+    {
+        var value = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        return value.TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    private static string HashQrToken(string token) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 }

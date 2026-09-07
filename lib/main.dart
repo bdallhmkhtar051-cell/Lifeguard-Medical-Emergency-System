@@ -39,10 +39,20 @@ void main() {
       patientProfileRepository: ApiPatientProfileRepository(apiClient),
       accessRepository: ApiAccessRepository(apiClient),
       clinicalRepository: ApiClinicalRepository(apiClient),
+      initialMedicalQrToken: _medicalQrTokenFrom(Uri.base),
     ),
   );
 
   // Bootstrap after the first frame so the user immediately sees a deliberate
   // loading state instead of a blank browser window.
   unawaited(appController.bootstrap());
+}
+
+/// QR secrets use the URL fragment so browsers do not send them to the static
+/// web host in request logs. Query parsing remains as a compatibility fallback.
+String? _medicalQrTokenFrom(Uri uri) {
+  final queryToken = uri.queryParameters['medicalQr'];
+  if (queryToken != null && queryToken.isNotEmpty) return queryToken;
+  if (uri.fragment.isEmpty) return null;
+  return Uri.splitQueryString(uri.fragment)['medicalQr'];
 }

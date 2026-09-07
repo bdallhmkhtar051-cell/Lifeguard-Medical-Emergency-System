@@ -6,5 +6,6 @@ public enum AccessAuditAction
     Viewed,
     Revoked,
     BreakGlassActivated,
+    QrRedeemed,
     ClinicalRecordCreated,
 }

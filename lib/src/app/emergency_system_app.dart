@@ -17,6 +17,7 @@ class EmergencySystemApp extends StatelessWidget {
     required this.patientProfileRepository,
     required this.accessRepository,
     required this.clinicalRepository,
+    this.initialMedicalQrToken,
     super.key,
   });
 
@@ -25,6 +26,7 @@ class EmergencySystemApp extends StatelessWidget {
   final PatientProfileRepository patientProfileRepository;
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
+  final String? initialMedicalQrToken;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +40,7 @@ class EmergencySystemApp extends StatelessWidget {
         patientProfileRepository: patientProfileRepository,
         accessRepository: accessRepository,
         clinicalRepository: clinicalRepository,
+        initialMedicalQrToken: initialMedicalQrToken,
       ),
     );
   }
@@ -50,6 +53,7 @@ class _AppRoot extends StatelessWidget {
     required this.patientProfileRepository,
     required this.accessRepository,
     required this.clinicalRepository,
+    required this.initialMedicalQrToken,
   });
 
   final AppController appController;
@@ -57,6 +61,7 @@ class _AppRoot extends StatelessWidget {
   final PatientProfileRepository patientProfileRepository;
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
+  final String? initialMedicalQrToken;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +89,7 @@ class _AppRoot extends StatelessWidget {
                     patientProfileRepository: patientProfileRepository,
                     accessRepository: accessRepository,
                     clinicalRepository: clinicalRepository,
+                    initialMedicalQrToken: initialMedicalQrToken,
                   );
                 }
                 return LoginPage(sessionController: sessionController);

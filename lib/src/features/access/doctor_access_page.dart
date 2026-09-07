@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
@@ -15,12 +17,14 @@ class DoctorAccessPage extends StatefulWidget {
     required this.repository,
     required this.clinicalRepository,
     required this.user,
+    this.initialMedicalQrToken,
     super.key,
   });
 
   final AccessRepository repository;
   final ClinicalRepository clinicalRepository;
   final AppUser user;
+  final String? initialMedicalQrToken;
 
   @override
   State<DoctorAccessPage> createState() => _DoctorAccessPageState();
@@ -38,7 +42,15 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
   @override
   void initState() {
     super.initState();
-    _load();
+    unawaited(_initialize());
+  }
+
+  Future<void> _initialize() async {
+    await _load();
+    final token = widget.initialMedicalQrToken?.trim();
+    if (mounted && token != null && token.isNotEmpty) {
+      await _redeemMedicalQr(token);
+    }
   }
 
   Future<void> _load() async {
@@ -144,6 +156,37 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
       if (mounted) await _open(access);
     } catch (error) {
       if (mounted) setState(() => _error = _message(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _redeemMedicalQr(String token) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final access = await widget.repository.redeemMedicalQr(token);
+      if (!mounted) return;
+      await _open(access);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Medical ID QR accepted. Access is active for 15 minutes.',
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = error is ApiException && error.statusCode == 404
+              ? 'This Medical ID QR has expired, was revoked, or was already used.'
+              : _message(error);
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -594,7 +637,7 @@ class _PatientDirectoryRow extends StatelessWidget {
                 Text(
                   currentAccess == null
                       ? 'RECORD LOCKED • EMERGENCY OVERRIDE AVAILABLE'
-                      : '${emergency ? 'BREAK-GLASS' : 'CONSENTED'} ACCESS EXPIRES ${_time(currentAccess.expiresAt)}',
+                      : '${_accessLabel(currentAccess.accessType)} ACCESS EXPIRES ${_time(currentAccess.expiresAt)}',
                   style: const TextStyle(
                     color: Color(0xFF64748B),
                     fontSize: 9,
@@ -800,7 +843,7 @@ class _ClinicalSnapshot extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    '${breakGlass ? 'BREAK-GLASS EMERGENCY' : 'CONSENTED'} • PROFILE READ ONLY • DOCUMENTATION ENABLED • ${_time(snapshot.expiresAt)}',
+                    '${_accessLabel(snapshot.accessType)} • PROFILE READ ONLY • DOCUMENTATION ENABLED • ${_time(snapshot.expiresAt)}',
                     style: TextStyle(
                       color: breakGlass
                           ? const Color(0xFF991B1B)
@@ -1134,5 +1177,11 @@ String _initials(String name) => name
 String _message(Object error) => error is ApiException
     ? error.message
     : 'Emergency access could not be loaded.';
+
+String _accessLabel(EmergencyAccessKind kind) => switch (kind) {
+  EmergencyAccessKind.consented => 'CONSENTED',
+  EmergencyAccessKind.qrConsented => 'QR CONSENT',
+  EmergencyAccessKind.breakGlass => 'BREAK-GLASS EMERGENCY',
+};
 
 String _time(DateTime value) => value.toLocal().toString().substring(0, 16);
