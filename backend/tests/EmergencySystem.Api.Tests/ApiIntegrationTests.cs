@@ -4,10 +4,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using EmergencySystem.Application.Access;
+using EmergencySystem.Application.Administration;
 using EmergencySystem.Application.Authentication;
 using EmergencySystem.Application.Clinical;
 using EmergencySystem.Application.Profiles;
 using EmergencySystem.Domain.Access;
+using EmergencySystem.Domain.Administration;
 using EmergencySystem.Domain.Identity;
 using EmergencySystem.Domain.Patients;
 using EmergencySystem.Infrastructure.Persistence;
@@ -95,6 +97,130 @@ public sealed class ApiIntegrationTests
         Assert.Equal(
             "application/problem+json",
             response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task Administration_endpoints_require_the_administrator_role()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var patientClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+
+        var response = await patientClient.GetAsync("/api/v1/admin/users");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Administrator_can_deactivate_account_and_action_is_audited()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var administratorClient = CreateClient(factory);
+        using var doctorClient = CreateClient(factory);
+        await LoginAsync(
+            administratorClient,
+            EmergencySystemApiFactory.AdministratorEmail);
+        await LoginAsync(doctorClient, EmergencySystemApiFactory.DoctorEmail);
+
+        var users = await administratorClient.GetFromJsonAsync<AdminUserSummary[]>(
+            "/api/v1/admin/users",
+            JsonOptions);
+        var doctor = Assert.Single(
+            Assert.IsType<AdminUserSummary[]>(users),
+            user => user.Email == EmergencySystemApiFactory.DoctorEmail);
+
+        var updateResponse = await administratorClient.PutAsJsonAsync(
+            $"/api/v1/admin/users/{doctor.Id}/status",
+            new UpdateUserStatusRequest(false),
+            JsonOptions);
+        var updated = await updateResponse.Content
+            .ReadFromJsonAsync<AdminUserSummary>(JsonOptions);
+
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        Assert.NotNull(updated);
+        Assert.False(updated.IsActive);
+
+        // Deactivation invalidates the token the doctor obtained before the change.
+        var existingSession = await doctorClient.GetAsync("/api/v1/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, existingSession.StatusCode);
+
+        using var newLoginClient = CreateClient(factory);
+        var newLogin = await newLoginClient.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new LoginRequest
+            {
+                Email = EmergencySystemApiFactory.DoctorEmail,
+                Password = EmergencySystemApiFactory.Password,
+            });
+        Assert.Equal(HttpStatusCode.Unauthorized, newLogin.StatusCode);
+
+        var audit = await administratorClient
+            .GetFromJsonAsync<AccountAdministrationAuditResponse[]>(
+                "/api/v1/admin/account-audit",
+                JsonOptions);
+        var entry = Assert.Single(
+            Assert.IsType<AccountAdministrationAuditResponse[]>(audit));
+        Assert.Equal(doctor.Id, entry.TargetUserId);
+        Assert.Equal("Test Administrator", entry.AdministratorName);
+        Assert.Equal(AccountAdministrationAction.Deactivated, entry.Action);
+    }
+
+    [Fact]
+    public async Task Administrator_cannot_deactivate_their_own_account()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var client = CreateClient(factory);
+        await LoginAsync(client, EmergencySystemApiFactory.AdministratorEmail);
+
+        var users = await client.GetFromJsonAsync<AdminUserSummary[]>(
+            "/api/v1/admin/users",
+            JsonOptions);
+        var administrator = Assert.Single(
+            Assert.IsType<AdminUserSummary[]>(users),
+            user => user.Email == EmergencySystemApiFactory.AdministratorEmail);
+
+        var response = await client.PutAsJsonAsync(
+            $"/api/v1/admin/users/{administrator.Id}/status",
+            new UpdateUserStatusRequest(false),
+            JsonOptions);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Administrator_can_review_access_metadata_without_clinical_records()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var patientClient = CreateClient(factory);
+        using var administratorClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+        await LoginAsync(
+            administratorClient,
+            EmergencySystemApiFactory.AdministratorEmail);
+
+        var grantResponse = await patientClient.PostAsJsonAsync(
+            "/api/v1/patients/me/emergency-access",
+            new GrantEmergencyAccessRequest(EmergencySystemApiFactory.DoctorEmail, 30),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, grantResponse.StatusCode);
+
+        var audit = await administratorClient
+            .GetFromJsonAsync<SystemAccessAuditResponse[]>(
+                "/api/v1/admin/access-audit",
+                JsonOptions);
+        var entry = Assert.Single(Assert.IsType<SystemAccessAuditResponse[]>(audit));
+
+        Assert.Equal("Test Patient", entry.ActorName);
+        Assert.Equal("Test Patient", entry.PatientName);
+        Assert.Equal(AccessAuditAction.Granted, entry.Action);
+        // The response contract contains security metadata and no clinical fields.
+        var responseJson = JsonSerializer.Serialize(entry, JsonOptions);
+        Assert.DoesNotContain("clinicalNotes", responseJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("medications", responseJson, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

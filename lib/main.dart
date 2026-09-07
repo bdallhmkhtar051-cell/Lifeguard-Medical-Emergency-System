@@ -9,6 +9,7 @@ import 'src/core/config/app_config.dart';
 import 'src/core/network/api_client.dart';
 import 'src/features/auth/auth_repository.dart';
 import 'src/features/auth/session_controller.dart';
+import 'src/features/administration/administration_repository.dart';
 import 'src/features/access/access_repository.dart';
 import 'src/features/clinical/clinical_repository.dart';
 import 'src/features/health/health_repository.dart';
@@ -39,6 +40,7 @@ void main() {
       patientProfileRepository: ApiPatientProfileRepository(apiClient),
       accessRepository: ApiAccessRepository(apiClient),
       clinicalRepository: ApiClinicalRepository(apiClient),
+      administrationRepository: ApiAdministrationRepository(apiClient),
       initialMedicalQrToken: _medicalQrTokenFrom(Uri.base),
     ),
   );

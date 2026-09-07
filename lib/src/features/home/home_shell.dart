@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../auth/auth_models.dart';
 import '../auth/session_controller.dart';
+import '../administration/administration_page.dart';
+import '../administration/administration_repository.dart';
 import '../access/access_repository.dart';
 import '../access/doctor_access_page.dart';
 import '../clinical/clinical_repository.dart';
@@ -14,6 +16,7 @@ class HomeShell extends StatelessWidget {
     required this.patientProfileRepository,
     required this.accessRepository,
     required this.clinicalRepository,
+    required this.administrationRepository,
     this.initialMedicalQrToken,
     super.key,
   });
@@ -22,6 +25,7 @@ class HomeShell extends StatelessWidget {
   final PatientProfileRepository patientProfileRepository;
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
+  final AdministrationRepository administrationRepository;
   final String? initialMedicalQrToken;
 
   @override
@@ -51,6 +55,11 @@ class HomeShell extends StatelessWidget {
               clinicalRepository: clinicalRepository,
               user: user,
               initialMedicalQrToken: initialMedicalQrToken,
+            )
+          : role == UserRole.administrator
+          ? AdministrationPage(
+              repository: administrationRepository,
+              currentUser: user,
             )
           : _RoleLanding(user: user),
     );

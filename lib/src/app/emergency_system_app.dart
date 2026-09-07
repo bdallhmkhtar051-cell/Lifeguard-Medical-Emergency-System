@@ -4,6 +4,7 @@ import '../core/theme/app_theme.dart';
 import '../core/widgets/async_error_panel.dart';
 import '../features/auth/login_page.dart';
 import '../features/auth/session_controller.dart';
+import '../features/administration/administration_repository.dart';
 import '../features/access/access_repository.dart';
 import '../features/clinical/clinical_repository.dart';
 import '../features/home/home_shell.dart';
@@ -17,6 +18,7 @@ class EmergencySystemApp extends StatelessWidget {
     required this.patientProfileRepository,
     required this.accessRepository,
     required this.clinicalRepository,
+    required this.administrationRepository,
     this.initialMedicalQrToken,
     super.key,
   });
@@ -26,6 +28,7 @@ class EmergencySystemApp extends StatelessWidget {
   final PatientProfileRepository patientProfileRepository;
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
+  final AdministrationRepository administrationRepository;
   final String? initialMedicalQrToken;
 
   @override
@@ -40,6 +43,7 @@ class EmergencySystemApp extends StatelessWidget {
         patientProfileRepository: patientProfileRepository,
         accessRepository: accessRepository,
         clinicalRepository: clinicalRepository,
+        administrationRepository: administrationRepository,
         initialMedicalQrToken: initialMedicalQrToken,
       ),
     );
@@ -53,6 +57,7 @@ class _AppRoot extends StatelessWidget {
     required this.patientProfileRepository,
     required this.accessRepository,
     required this.clinicalRepository,
+    required this.administrationRepository,
     required this.initialMedicalQrToken,
   });
 
@@ -61,6 +66,7 @@ class _AppRoot extends StatelessWidget {
   final PatientProfileRepository patientProfileRepository;
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
+  final AdministrationRepository administrationRepository;
   final String? initialMedicalQrToken;
 
   @override
@@ -89,6 +95,7 @@ class _AppRoot extends StatelessWidget {
                     patientProfileRepository: patientProfileRepository,
                     accessRepository: accessRepository,
                     clinicalRepository: clinicalRepository,
+                    administrationRepository: administrationRepository,
                     initialMedicalQrToken: initialMedicalQrToken,
                   );
                 }

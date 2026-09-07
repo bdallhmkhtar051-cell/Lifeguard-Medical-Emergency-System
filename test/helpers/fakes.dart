@@ -1,6 +1,8 @@
 import 'package:emergency_system/src/core/network/api_exception.dart';
 import 'package:emergency_system/src/features/auth/auth_models.dart';
 import 'package:emergency_system/src/features/auth/auth_repository.dart';
+import 'package:emergency_system/src/features/administration/administration_models.dart';
+import 'package:emergency_system/src/features/administration/administration_repository.dart';
 import 'package:emergency_system/src/features/access/access_models.dart';
 import 'package:emergency_system/src/features/access/access_repository.dart';
 import 'package:emergency_system/src/features/health/health_repository.dart';
@@ -29,6 +31,33 @@ const sampleAdministrator = AppUser(
   displayName: 'System Administrator',
   roles: <UserRole>{UserRole.administrator},
 );
+
+final sampleAdminUsers = <AdminUser>[
+  AdminUser(
+    id: samplePatient.id,
+    displayName: samplePatient.displayName,
+    email: samplePatient.email,
+    roles: const ['Patient'],
+    isActive: true,
+    createdAtUtc: DateTime.utc(2026, 7, 28),
+  ),
+  AdminUser(
+    id: sampleDoctor.id,
+    displayName: sampleDoctor.displayName,
+    email: sampleDoctor.email,
+    roles: const ['Doctor'],
+    isActive: true,
+    createdAtUtc: DateTime.utc(2026, 7, 28),
+  ),
+  AdminUser(
+    id: sampleAdministrator.id,
+    displayName: sampleAdministrator.displayName,
+    email: sampleAdministrator.email,
+    roles: const ['Administrator'],
+    isActive: true,
+    createdAtUtc: DateTime.utc(2026, 7, 28),
+  ),
+];
 
 final sampleProfile = EmergencyProfile(
   id: 'profile-id',
@@ -284,6 +313,55 @@ class FakeClinicalRepository implements ClinicalRepository {
     );
     records = [record, ...records];
     return record;
+  }
+}
+
+class FakeAdministrationRepository implements AdministrationRepository {
+  FakeAdministrationRepository({List<AdminUser>? users})
+    : currentUsers = List<AdminUser>.from(users ?? sampleAdminUsers);
+
+  List<AdminUser> currentUsers;
+  final List<AccountAdministrationAudit> audit = [];
+  String? changedUserId;
+
+  @override
+  Future<List<AdminUser>> users() async => List.unmodifiable(currentUsers);
+
+  @override
+  Future<List<AccountAdministrationAudit>> accountAudit() async =>
+      List.unmodifiable(audit);
+
+  @override
+  Future<List<SystemAccessAudit>> accessAudit() async => const [];
+
+  @override
+  Future<AdminUser> updateStatus(
+    String userId, {
+    required bool isActive,
+  }) async {
+    changedUserId = userId;
+    final index = currentUsers.indexWhere((user) => user.id == userId);
+    final old = currentUsers[index];
+    final updated = AdminUser(
+      id: old.id,
+      displayName: old.displayName,
+      email: old.email,
+      roles: old.roles,
+      isActive: isActive,
+      createdAtUtc: old.createdAtUtc,
+    );
+    currentUsers[index] = updated;
+    audit.insert(
+      0,
+      AccountAdministrationAudit(
+        id: 'audit-${audit.length + 1}',
+        administratorName: sampleAdministrator.displayName,
+        targetUserName: updated.displayName,
+        action: isActive ? 'Activated' : 'Deactivated',
+        occurredAtUtc: DateTime.utc(2026, 9, 7, 12),
+      ),
+    );
+    return updated;
   }
 }
 

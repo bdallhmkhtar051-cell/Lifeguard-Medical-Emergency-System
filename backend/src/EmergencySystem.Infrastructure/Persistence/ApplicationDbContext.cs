@@ -1,3 +1,4 @@
+using EmergencySystem.Domain.Administration;
 using EmergencySystem.Domain.Access;
 using EmergencySystem.Domain.Clinical;
 using EmergencySystem.Domain.Patients;
@@ -27,6 +28,9 @@ public sealed class ApplicationDbContext(
     public DbSet<AccessAuditEvent> AccessAuditEvents => Set<AccessAuditEvent>();
 
     public DbSet<MedicalQrToken> MedicalQrTokens => Set<MedicalQrToken>();
+
+    public DbSet<AccountAdministrationEvent> AccountAdministrationEvents =>
+        Set<AccountAdministrationEvent>();
 
     public DbSet<ClinicalEncounter> ClinicalEncounters => Set<ClinicalEncounter>();
 

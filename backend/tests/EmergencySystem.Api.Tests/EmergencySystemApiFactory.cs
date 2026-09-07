@@ -20,6 +20,7 @@ internal sealed class EmergencySystemApiFactory : WebApplicationFactory<Program>
 {
     public const string PatientEmail = "patient.test@emergency.test";
     public const string DoctorEmail = "doctor.test@emergency.test";
+    public const string AdministratorEmail = "admin.test@emergency.test";
     public const string Password = "TestingOnly!123";
 
     private readonly SqliteConnection _connection = new("Data Source=:memory:");
@@ -99,6 +100,11 @@ internal sealed class EmergencySystemApiFactory : WebApplicationFactory<Program>
             DoctorEmail,
             "Test Doctor",
             RoleNames.Doctor);
+        await CreateUserAsync(
+            userManager,
+            AdministratorEmail,
+            "Test Administrator",
+            RoleNames.Administrator);
 
         dbContext.PatientProfiles.Add(new PatientProfile
         {

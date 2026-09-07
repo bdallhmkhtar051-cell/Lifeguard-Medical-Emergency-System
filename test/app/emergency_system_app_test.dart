@@ -3,6 +3,7 @@ import 'package:emergency_system/src/app/emergency_system_app.dart';
 import 'package:emergency_system/src/core/network/api_client.dart';
 import 'package:emergency_system/src/features/auth/session_controller.dart';
 import 'package:emergency_system/src/features/patient_profile/patient_profile_page.dart';
+import 'package:emergency_system/src/features/administration/administration_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -112,6 +113,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Welcome back'), findsOneWidget);
   });
+
+  testWidgets('administrator can review users and deactivate an account', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository(user: sampleAdministrator);
+    final administration = FakeAdministrationRepository();
+    final harness = await _Harness.create(
+      auth: auth,
+      administration: administration,
+      authenticate: true,
+    );
+
+    await tester.pumpWidget(harness.app);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AdministrationPage), findsOneWidget);
+    expect(find.text('System administration'), findsOneWidget);
+    expect(find.text(sampleDoctor.displayName), findsOneWidget);
+
+    await tester.tap(find.byKey(ValueKey('toggle-user-${sampleDoctor.id}')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('confirm-status-change')));
+    await tester.pumpAndSettle();
+
+    expect(administration.changedUserId, sampleDoctor.id);
+    expect(
+      find.text('${sampleDoctor.displayName} was deactivated'),
+      findsOneWidget,
+    );
+  });
 }
 
 class _Harness {
@@ -119,12 +150,14 @@ class _Harness {
     required this.appController,
     required this.sessionController,
     required this.profileRepository,
+    required this.administrationRepository,
   });
 
   static Future<_Harness> create({
     FakeHealthRepository? health,
     FakeAuthRepository? auth,
     FakePatientProfileRepository? profile,
+    FakeAdministrationRepository? administration,
     bool authenticate = false,
   }) async {
     final appController = AppController(
@@ -150,12 +183,15 @@ class _Harness {
       appController: appController,
       sessionController: sessionController,
       profileRepository: profile ?? FakePatientProfileRepository(),
+      administrationRepository:
+          administration ?? FakeAdministrationRepository(),
     );
   }
 
   final AppController appController;
   final SessionController sessionController;
   final FakePatientProfileRepository profileRepository;
+  final FakeAdministrationRepository administrationRepository;
 
   Widget get app => EmergencySystemApp(
     appController: appController,
@@ -163,5 +199,6 @@ class _Harness {
     patientProfileRepository: profileRepository,
     accessRepository: FakeAccessRepository(),
     clinicalRepository: FakeClinicalRepository(),
+    administrationRepository: administrationRepository,
   );
 }
