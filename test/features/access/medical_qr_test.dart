@@ -53,6 +53,38 @@ void main() {
     expect(repository.qrRevokeCalls, 1);
   });
 
+  testWidgets('scanner dialog fits a short browser window', (tester) async {
+    tester.view.physicalSize = const Size(800, 430);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: FilledButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => MedicalQrScannerDialog(
+                  expectedBaseUri: Uri.parse('http://localhost'),
+                  scannerBuilder: (_, __) =>
+                      const ColoredBox(color: Colors.black),
+                ),
+              ),
+              child: const Text('Open scanner'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open scanner'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MedicalQrScannerDialog), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('doctor automatically redeems a QR link after sign in', (
     tester,
   ) async {

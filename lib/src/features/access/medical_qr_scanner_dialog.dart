@@ -75,7 +75,12 @@ class _MedicalQrScannerDialogState extends State<MedicalQrScannerDialog> {
   @override
   Widget build(BuildContext context) {
     final customScanner = widget.scannerBuilder;
+    final viewportHeight = MediaQuery.sizeOf(context).height;
+    final previewHeight = (viewportHeight * .46).clamp(180.0, 360.0);
     return AlertDialog(
+      // Short browser windows scroll instead of overflowing vertically.
+      scrollable: true,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       title: const Text('Scan Medical ID QR'),
       content: SizedBox(
         width: 520,
@@ -84,8 +89,8 @@ class _MedicalQrScannerDialogState extends State<MedicalQrScannerDialog> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: AspectRatio(
-                aspectRatio: 4 / 3,
+              child: SizedBox(
+                height: previewHeight,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -141,17 +146,22 @@ class _ScannerFrame extends StatelessWidget {
   const _ScannerFrame();
 
   @override
-  Widget build(BuildContext context) => IgnorePointer(
-    child: Center(
-      child: Container(
-        width: 230,
-        height: 230,
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFF2DD4BF), width: 4),
-          borderRadius: BorderRadius.circular(22),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final side = (constraints.biggest.shortestSide * .64).clamp(120.0, 230.0);
+      return IgnorePointer(
+        child: Center(
+          child: Container(
+            width: side,
+            height: side,
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFF2DD4BF), width: 4),
+              borderRadius: BorderRadius.circular(22),
+            ),
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
