@@ -49,9 +49,9 @@ internal sealed class GeminiMedicalSummaryService(
             },
             generationConfig = new
             {
-                temperature = 0.1,
-                maxOutputTokens = 350,
+                maxOutputTokens = 1200,
                 responseMimeType = "text/plain",
+                thinkingConfig = new { thinkingLevel = "low" },
             },
         });
 
@@ -65,17 +65,12 @@ internal sealed class GeminiMedicalSummaryService(
             using var document = await JsonDocument.ParseAsync(
                 await response.Content.ReadAsStreamAsync(cancellationToken),
                 cancellationToken: cancellationToken);
-            var text = document.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString()?.Trim();
+            var text = ExtractAnswer(document.RootElement);
             if (string.IsNullOrWhiteSpace(text))
                 throw new AiServiceUnavailableException(
                     "The AI provider returned an empty summary.");
 
-            return new(text, timeProvider.GetUtcNow(), _options.Model, Disclaimer);
+            return new(CleanFormatting(text), timeProvider.GetUtcNow(), _options.Model, Disclaimer);
         }
         catch (AiServiceUnavailableException) { throw; }
         catch (Exception exception) when (
@@ -87,10 +82,40 @@ internal sealed class GeminiMedicalSummaryService(
     }
 
     private const string SystemInstruction =
-        "Summarize only the supplied verified medical record for a clinician. " +
-        "Do not infer missing facts, diagnose, recommend treatment, or change values. " +
-        "Use concise headings for critical alerts, current medicines, conditions, " +
-        "contacts, and recent encounters. State 'not recorded' when appropriate.";
+        "Create a clear emergency medical handover for a clinician using only the " +
+        "verified record supplied by the application. Do not infer missing facts, " +
+        "diagnose, recommend treatment, or change any value. Use plain text only: " +
+        "no Markdown, asterisks, hash signs, tables, or decorative characters. " +
+        "Use these headings in this exact order: PATIENT OVERVIEW, CRITICAL ALERTS, " +
+        "CURRENT CONDITIONS, CURRENT MEDICATIONS, EMERGENCY CONTACT, RECENT CLINICAL " +
+        "HISTORY. Under each heading, write short complete sentences that are easy " +
+        "to understand during an emergency. Avoid repetition. Say 'Not recorded' " +
+        "when a section has no supplied information. Keep the response under 350 words.";
+
+    private static string? ExtractAnswer(JsonElement root)
+    {
+        var parts = root.GetProperty("candidates")[0]
+            .GetProperty("content")
+            .GetProperty("parts");
+        var answer = new StringBuilder();
+        foreach (var part in parts.EnumerateArray())
+        {
+            if (part.TryGetProperty("thought", out var thought) &&
+                thought.ValueKind == JsonValueKind.True)
+                continue;
+            if (part.TryGetProperty("text", out var text) &&
+                !string.IsNullOrWhiteSpace(text.GetString()))
+                answer.AppendLine(text.GetString());
+        }
+        return answer.ToString().Trim();
+    }
+
+    private static string CleanFormatting(string text) => text
+        .Replace("**", string.Empty, StringComparison.Ordinal)
+        .Replace("*", string.Empty, StringComparison.Ordinal)
+        .Replace("`", string.Empty, StringComparison.Ordinal)
+        .Replace("###", string.Empty, StringComparison.Ordinal)
+        .Trim();
 
     private static string BuildRecord(
         DoctorEmergencySnapshotResponse snapshot,
