@@ -207,6 +207,7 @@ class FakeAccessRepository implements AccessRepository {
   int qrIssueCalls = 0;
   int qrRevokeCalls = 0;
   String? redeemedQrToken;
+  int aiSummaryCalls = 0;
   final doctor = const DoctorOption(
     id: 'doctor-user-id',
     name: 'Dr. Ali Hassan',
@@ -275,6 +276,20 @@ class FakeAccessRepository implements AccessRepository {
       expiresAt: access.expiresAt,
       profile: sampleProfile,
       accessType: access.accessType,
+    );
+  }
+
+
+  @override
+  Future<AiMedicalSummary> generateAiSummary(String grantId) async {
+    aiSummaryCalls++;
+    return AiMedicalSummary(
+      summary:
+          'Critical alert: severe penicillin allergy. Current condition: asthma.',
+      generatedAt: DateTime.utc(2026, 9, 8, 10),
+      model: 'test-model',
+      disclaimer:
+          'AI-generated summary. Verify every detail in the medical record. Not a diagnosis or treatment recommendation.',
     );
   }
 }

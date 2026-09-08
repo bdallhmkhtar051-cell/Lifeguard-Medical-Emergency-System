@@ -158,6 +158,29 @@ class DoctorSnapshot {
   final String? emergencyReason;
 }
 
+/// A temporary, clinician-facing summary generated from the authorized record.
+class AiMedicalSummary {
+  const AiMedicalSummary({
+    required this.summary,
+    required this.generatedAt,
+    required this.model,
+    required this.disclaimer,
+  });
+
+  factory AiMedicalSummary.fromJson(Map<String, dynamic> json) =>
+      AiMedicalSummary(
+        summary: json['summary'].toString(),
+        generatedAt: DateTime.parse(json['generatedAtUtc'].toString()),
+        model: json['model'].toString(),
+        disclaimer: json['disclaimer'].toString(),
+      );
+
+  final String summary;
+  final DateTime generatedAt;
+  final String model;
+  final String disclaimer;
+}
+
 List<T> _list<T>(Object? value, T Function(Map<String, dynamic>) parse) =>
     (value as List<dynamic>).cast<Map<String, dynamic>>().map(parse).toList();
 

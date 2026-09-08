@@ -1,6 +1,8 @@
 using EmergencySystem.Api.Security;
 using EmergencySystem.Api.RateLimiting;
 using EmergencySystem.Application.Access;
+using EmergencySystem.Application.Ai;
+using EmergencySystem.Application.Clinical;
 using EmergencySystem.Application.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +14,10 @@ namespace EmergencySystem.Api.Controllers;
 [Route("api/v1/doctors/emergency-access")]
 [Authorize(Policy = AuthorizationPolicyNames.DoctorOnly)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public sealed class DoctorAccessController(IEmergencyAccessService accessService)
+public sealed class DoctorAccessController(
+    IEmergencyAccessService accessService,
+    IClinicalRecordService clinicalRecordService,
+    IAiMedicalSummaryService aiSummaryService)
     : ControllerBase
 {
     [HttpGet]
@@ -49,5 +54,21 @@ public sealed class DoctorAccessController(IEmergencyAccessService accessService
         var snapshot = await accessService.GetDoctorSnapshotAsync(
             userId, grantId, cancellationToken);
         return snapshot is null ? NotFound() : Ok(snapshot);
+    }
+
+    [HttpPost("{grantId:guid}/ai-summary")]
+    [EnableRateLimiting(RateLimitPolicyNames.AiSummary)]
+    public async Task<ActionResult<AiMedicalSummaryResponse>> AiSummary(
+        Guid grantId,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var doctorId)) return Unauthorized();
+        var snapshot = await accessService.GetDoctorSnapshotAsync(
+            doctorId, grantId, cancellationToken);
+        var history = await clinicalRecordService.GetForDoctorAsync(
+            doctorId, grantId, cancellationToken);
+        if (snapshot is null || history is null) return NotFound();
+        return Ok(await aiSummaryService.GenerateAsync(
+            snapshot, history, cancellationToken));
     }
 }

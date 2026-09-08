@@ -16,6 +16,7 @@ abstract interface class AccessRepository {
   });
   Future<DoctorAccess> redeemMedicalQr(String token);
   Future<DoctorSnapshot> doctorSnapshot(String grantId);
+  Future<AiMedicalSummary> generateAiSummary(String grantId);
 }
 
 class ApiAccessRepository implements AccessRepository {
@@ -132,6 +133,18 @@ class ApiAccessRepository implements AccessRepository {
     try {
       return DoctorSnapshot.fromJson(
         (await _api.getJson('$_doctorPath/$grantId/snapshot')).requireObject(),
+      );
+    } on FormatException {
+      throw const ApiException.protocol();
+    }
+  }
+
+  @override
+  Future<AiMedicalSummary> generateAiSummary(String grantId) async {
+    try {
+      return AiMedicalSummary.fromJson(
+        (await _api.postJson('$_doctorPath/$grantId/ai-summary'))
+            .requireObject(),
       );
     } on FormatException {
       throw const ApiException.protocol();

@@ -11,6 +11,7 @@ import '../clinical/clinical_models.dart';
 import '../clinical/clinical_repository.dart';
 import 'access_models.dart';
 import 'access_repository.dart';
+import 'ai_medical_summary_dialog.dart';
 import 'medical_qr_scanner_dialog.dart';
 
 class DoctorAccessPage extends StatefulWidget {
@@ -141,6 +142,29 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
     }
   }
 
+  Future<void> _generateAiSummary() async {
+    final access = _selectedAccess;
+    if (access == null) return;
+    AiMedicalSummary? summary;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      summary = await widget.repository.generateAiSummary(access.id);
+    } catch (error) {
+      if (mounted) setState(() => _error = _message(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+    if (summary != null && mounted) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AiMedicalSummaryDialog(summary: summary!),
+      );
+    }
+  }
+
   Future<void> _breakGlass(DoctorPatient patient) async {
     final reason = await showDialog<String>(
       context: context,
@@ -258,6 +282,7 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
                     clinicalRecords: _clinicalRecords,
                     busy: _busy,
                     onCreateEncounter: _createEncounter,
+                    onGenerateAiSummary: _generateAiSummary,
                   ),
                 ] else if ((_access, _patients) case (
                   final access?,
@@ -797,12 +822,14 @@ class _ClinicalSnapshot extends StatelessWidget {
     required this.clinicalRecords,
     required this.busy,
     required this.onCreateEncounter,
+    required this.onGenerateAiSummary,
   });
 
   final DoctorSnapshot snapshot;
   final List<ClinicalEncounter> clinicalRecords;
   final bool busy;
   final VoidCallback onCreateEncounter;
+  final VoidCallback onGenerateAiSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -914,6 +941,16 @@ class _ClinicalSnapshot extends StatelessWidget {
         const SizedBox(height: 18),
         _SnapshotGrid(profile: profile),
         const SizedBox(height: 18),
+        Align(
+          alignment: Alignment.centerRight,
+          child: OutlinedButton.icon(
+            key: const ValueKey('generate-ai-summary'),
+            onPressed: busy ? null : onGenerateAiSummary,
+            icon: const Icon(Icons.auto_awesome, size: 18),
+            label: const Text('Generate AI summary'),
+          ),
+        ),
+        const SizedBox(height: 12),
         ClinicalHistoryPanel(
           records: clinicalRecords,
           busy: busy,

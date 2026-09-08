@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using EmergencySystem.Application.Administration;
+using EmergencySystem.Application.Ai;
 using EmergencySystem.Application.Access;
 using EmergencySystem.Application.Authentication;
 using EmergencySystem.Application.Clinical;
@@ -8,6 +9,7 @@ using EmergencySystem.Application.Profiles;
 using EmergencySystem.Application.Security;
 using EmergencySystem.Domain.Identity;
 using EmergencySystem.Infrastructure.Administration;
+using EmergencySystem.Infrastructure.Ai;
 using EmergencySystem.Infrastructure.Access;
 using EmergencySystem.Infrastructure.Authentication;
 using EmergencySystem.Infrastructure.Clinical;
@@ -57,6 +59,8 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.Configure<DemoSeedOptions>(
             configuration.GetRequiredSection(DemoSeedOptions.SectionName));
+        services.Configure<GeminiOptions>(
+            configuration.GetSection(GeminiOptions.SectionName));
         services.TryAddSingleton(TimeProvider.System);
 
         services.AddDbContext<ApplicationDbContext>(options =>
@@ -140,6 +144,11 @@ public static class DependencyInjection
         services.AddScoped<IEmergencyAccessService, EmergencyAccessService>();
         services.AddScoped<IClinicalRecordService, ClinicalRecordService>();
         services.AddScoped<IAdministrationService, AdministrationService>();
+        services.AddHttpClient<IAiMedicalSummaryService, GeminiMedicalSummaryService>(client =>
+        {
+            client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
         services.AddScoped<IDemoDataSeeder, DemoDataSeeder>();
 
         return services;

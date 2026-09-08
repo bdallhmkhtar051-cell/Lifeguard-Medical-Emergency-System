@@ -1,5 +1,6 @@
 using EmergencySystem.Domain.Identity;
 using EmergencySystem.Domain.Patients;
+using EmergencySystem.Application.Ai;
 using EmergencySystem.Infrastructure.Identity;
 using EmergencySystem.Infrastructure.Persistence;
 using Microsoft.AspNetCore.DataProtection;
@@ -60,12 +61,14 @@ internal sealed class EmergencySystemApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<ApplicationDbContext>();
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
+            services.RemoveAll<IAiMedicalSummaryService>();
 
             services.AddSingleton(_connection);
             services.AddDataProtection().UseEphemeralDataProtectionProvider();
             services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
                 options.UseSqlite(
                     serviceProvider.GetRequiredService<SqliteConnection>()));
+            services.AddSingleton<IAiMedicalSummaryService, FakeAiMedicalSummaryService>();
         });
     }
 

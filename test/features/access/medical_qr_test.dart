@@ -166,5 +166,14 @@ void main() {
     expect(repository.redeemedQrToken, 'camera-scanned-token');
     expect(find.textContaining('QR CONSENT'), findsOneWidget);
     expect(find.text(sampleProfile.fullName), findsWidgets);
+
+    final aiButton = find.byKey(const ValueKey('generate-ai-summary'));
+    await tester.ensureVisible(aiButton);
+    await tester.tap(aiButton);
+    await tester.pumpAndSettle();
+
+    expect(repository.aiSummaryCalls, 1);
+    expect(find.text('AI Medical Summary'), findsOneWidget);
+    expect(find.textContaining('Not a diagnosis'), findsOneWidget);
   });
 }

@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using EmergencySystem.Application.Access;
 using EmergencySystem.Application.Administration;
 using EmergencySystem.Application.Authentication;
+using EmergencySystem.Application.Ai;
 using EmergencySystem.Application.Clinical;
 using EmergencySystem.Application.Profiles;
 using EmergencySystem.Domain.Access;
@@ -374,6 +375,38 @@ public sealed class ApiIntegrationTests
         var deniedSnapshot = await doctorClient.GetAsync(
             $"/api/v1/doctors/emergency-access/{grant.Id}/snapshot");
         Assert.Equal(HttpStatusCode.NotFound, deniedSnapshot.StatusCode);
+    }
+
+    [Fact]
+    public async Task Active_doctor_access_can_generate_a_guarded_ai_summary()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var patientClient = CreateClient(factory);
+        using var doctorClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+        await LoginAsync(doctorClient, EmergencySystemApiFactory.DoctorEmail);
+
+        var grantResponse = await patientClient.PostAsJsonAsync(
+            "/api/v1/patients/me/emergency-access",
+            new GrantEmergencyAccessRequest(EmergencySystemApiFactory.DoctorEmail, 60),
+            JsonOptions);
+        var grant = await grantResponse.Content
+            .ReadFromJsonAsync<EmergencyAccessGrantResponse>(JsonOptions);
+        Assert.NotNull(grant);
+
+        var response = await doctorClient.PostAsync(
+            $"/api/v1/doctors/emergency-access/{grant.Id}/ai-summary", null);
+        var summary = await response.Content
+            .ReadFromJsonAsync<AiMedicalSummaryResponse>(JsonOptions);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("Test Patient", summary?.Summary);
+        Assert.Contains("Not a diagnosis", summary?.Disclaimer);
+
+        var patientAttempt = await patientClient.PostAsync(
+            $"/api/v1/doctors/emergency-access/{grant.Id}/ai-summary", null);
+        Assert.Equal(HttpStatusCode.Forbidden, patientAttempt.StatusCode);
     }
 
     [Fact]

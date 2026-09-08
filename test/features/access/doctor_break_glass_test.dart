@@ -113,4 +113,8 @@ class _BreakGlassRepository implements AccessRepository {
   @override
   Future<DoctorAccess> redeemMedicalQr(String token) =>
       throw UnimplementedError();
+
+  @override
+  Future<AiMedicalSummary> generateAiSummary(String grantId) =>
+      throw UnimplementedError();
 }

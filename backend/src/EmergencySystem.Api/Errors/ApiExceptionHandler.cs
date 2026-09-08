@@ -37,6 +37,15 @@ public sealed class ApiExceptionHandler(
                 };
                 break;
 
+            case AiServiceUnavailableException unavailable:
+                problem = new ProblemDetails
+                {
+                    Status = StatusCodes.Status503ServiceUnavailable,
+                    Title = "AI summary unavailable",
+                    Detail = unavailable.Message,
+                };
+                break;
+
             default:
                 logger.LogError(
                     exception,

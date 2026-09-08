@@ -12,3 +12,6 @@ public sealed class ProfilePreconditionFailedException(
     : Exception(
         "The emergency profile changed or the requested resource state does not match.",
         innerException);
+
+public sealed class AiServiceUnavailableException(string message)
+    : Exception(message);

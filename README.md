@@ -14,14 +14,15 @@ audit system.
   after the core password flow is stable
 - **Firebase:** not part of the MVP; Cloud Messaging may be added for a later
   patient mobile application
-- **AI:** documented as future work, not part of the current implementation
+- **AI:** guarded Gemini medical summaries generated through the ASP.NET backend
 - **Later client:** a focused Flutter Android/iOS patient application using the
   same API
 
-Five secure vertical slices are implemented. A seeded patient can sign in,
-maintain an SQL-backed emergency profile, grant a doctor time-limited read-only
-access, revoke it, and inspect the resulting access history. The doctor sees
-only currently authorized snapshots, and every opened snapshot is audited.
+Eight development checkpoints are implemented. A seeded patient can sign in,
+maintain an SQL-backed emergency profile, grant a doctor time-limited access,
+revoke it, and inspect the resulting access history. Doctors see only
+authorized snapshots, can append clinical encounters, and every opened
+snapshot is audited.
 
 Implemented at checkpoint 01:
 
@@ -59,8 +60,14 @@ Implemented at checkpoint 05:
 - authenticated doctor redemption into 15 minutes of audited access;
 - automatic doctor redemption after the QR opens the Flutter web application.
 
-The functional administrator module, passkeys, documents, AI, and production
-deployment are later milestones, not finished features.
+Implemented at checkpoints 06 to 08:
+
+- administrator account management with server-enforced administrator access;
+- browser-camera scanning for the secure Medical ID QR workflow;
+- doctor-only, rate-limited AI summaries generated from an actively authorized
+  medical record, with clinical verification warnings.
+
+Passkeys, document upload, and production deployment are later milestones.
 
 ## Start here
 
@@ -68,12 +75,13 @@ deployment are later milestones, not finished features.
    and verify the working system.
 2. Demonstrate the [checkpoint 02 access workflow](docs/DEVELOPMENT_CHECKPOINT_02.md).
 3. Demonstrate the [checkpoint 05 secure QR workflow](docs/DEVELOPMENT_CHECKPOINT_05.md).
-4. Review the [recommended architecture](docs/ARCHITECTURE.md).
-5. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
-6. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
-7. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
+4. Review the [checkpoint 08 AI summary workflow](docs/DEVELOPMENT_CHECKPOINT_08.md).
+5. Review the [recommended architecture](docs/ARCHITECTURE.md).
+6. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
+7. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
+8. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
    correct medical project-description document.
-8. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) for
+9. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) for
    the later, optional milestone.
 
 ## Run locally
