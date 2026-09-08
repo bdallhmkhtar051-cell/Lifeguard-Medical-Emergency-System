@@ -11,6 +11,7 @@ import '../clinical/clinical_models.dart';
 import '../clinical/clinical_repository.dart';
 import 'access_models.dart';
 import 'access_repository.dart';
+import 'medical_qr_scanner_dialog.dart';
 
 class DoctorAccessPage extends StatefulWidget {
   const DoctorAccessPage({
@@ -18,6 +19,8 @@ class DoctorAccessPage extends StatefulWidget {
     required this.clinicalRepository,
     required this.user,
     this.initialMedicalQrToken,
+    this.scannerBuilder,
+    this.scannerExpectedBaseUri,
     super.key,
   });
 
@@ -25,6 +28,8 @@ class DoctorAccessPage extends StatefulWidget {
   final ClinicalRepository clinicalRepository;
   final AppUser user;
   final String? initialMedicalQrToken;
+  final MedicalQrScannerViewBuilder? scannerBuilder;
+  final Uri? scannerExpectedBaseUri;
 
   @override
   State<DoctorAccessPage> createState() => _DoctorAccessPageState();
@@ -192,6 +197,18 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
     }
   }
 
+  Future<void> _scanMedicalQr() async {
+    final token = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => MedicalQrScannerDialog(
+        scannerBuilder: widget.scannerBuilder,
+        expectedBaseUri: widget.scannerExpectedBaseUri,
+      ),
+    );
+    if (token != null && mounted) await _redeemMedicalQr(token);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -209,6 +226,7 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
                   patientCount: _access?.length ?? 0,
                   busy: _busy,
                   onRefresh: _load,
+                  onScanMedicalQr: _scanMedicalQr,
                 ),
                 if (_error != null)
                   Padding(
@@ -270,12 +288,14 @@ class _ClinicianCredential extends StatelessWidget {
     required this.patientCount,
     required this.busy,
     required this.onRefresh,
+    required this.onScanMedicalQr,
   });
 
   final AppUser user;
   final int patientCount;
   final bool busy;
   final VoidCallback onRefresh;
+  final VoidCallback onScanMedicalQr;
 
   @override
   Widget build(BuildContext context) {
@@ -460,6 +480,19 @@ class _ClinicianCredential extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    key: const ValueKey('scan-medical-qr-button'),
+                    onPressed: busy ? null : onScanMedicalQr,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF0D9488),
+                    ),
+                    icon: const Icon(Icons.qr_code_scanner),
+                    label: const Text('Scan Medical ID QR'),
+                  ),
                 ),
               ],
             ),
