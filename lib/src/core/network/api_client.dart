@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import 'api_exception.dart';
 
@@ -23,6 +24,13 @@ class ApiResponse {
     }
     throw const ApiException.protocol();
   }
+}
+
+class ApiBinaryResponse {
+  const ApiBinaryResponse({required this.bytes, required this.headers});
+
+  final List<int> bytes;
+  final Map<String, String> headers;
 }
 
 /// Small HTTP boundary shared by feature repositories.
@@ -88,6 +96,53 @@ class ApiClient {
     return _send(method: 'PUT', path: path, body: body, headers: headers);
   }
 
+  Future<ApiResponse> deleteJson(String path) {
+    return _send(method: 'DELETE', path: path);
+  }
+
+  Future<ApiResponse> postMultipart(
+    String path, {
+    required List<int> bytes,
+    required String fileName,
+    required String contentType,
+    Map<String, String> fields = const {},
+  }) async {
+    final request = http.MultipartRequest('POST', _resolve(path));
+    request.headers['Accept'] = 'application/json';
+    request.fields.addAll(fields);
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: fileName,
+        contentType: MediaType.parse(contentType),
+      ),
+    );
+    final response = await _sendRequest(request);
+    final parsed = _decodeBody(response);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return ApiResponse(
+        statusCode: response.statusCode,
+        headers: response.headers,
+        data: parsed,
+      );
+    }
+    throw _problemException(response, parsed);
+  }
+
+  Future<ApiBinaryResponse> getBytes(String path) async {
+    final request = http.Request('GET', _resolve(path));
+    request.headers['Accept'] = 'application/octet-stream';
+    final response = await _sendRequest(request);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw _problemException(response, _decodeBody(response));
+    }
+    return ApiBinaryResponse(
+      bytes: response.bodyBytes,
+      headers: response.headers,
+    );
+  }
+
   Future<ApiResponse> _send({
     required String method,
     required String path,
@@ -142,6 +197,26 @@ class ApiClient {
       rethrow;
     } on FormatException {
       throw const ApiException.protocol();
+    }
+  }
+
+  Future<http.Response> _sendRequest(http.BaseRequest request) async {
+    final token = _accessToken;
+    if (token != null) request.headers['Authorization'] = '$_tokenType $token';
+    try {
+      final streamed = await _client.send(request).timeout(timeout);
+      final response = await http.Response.fromStream(
+        streamed,
+      ).timeout(timeout);
+      if (response.statusCode == 401) {
+        final callback = onUnauthorized;
+        if (callback != null) Timer.run(callback);
+      }
+      return response;
+    } on TimeoutException {
+      throw const ApiException.timeout();
+    } on http.ClientException {
+      throw const ApiException.network();
     }
   }
 

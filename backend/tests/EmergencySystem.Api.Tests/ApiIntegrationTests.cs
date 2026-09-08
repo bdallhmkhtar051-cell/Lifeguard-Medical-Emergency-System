@@ -8,6 +8,7 @@ using EmergencySystem.Application.Administration;
 using EmergencySystem.Application.Authentication;
 using EmergencySystem.Application.Ai;
 using EmergencySystem.Application.Clinical;
+using EmergencySystem.Application.Documents;
 using EmergencySystem.Application.Profiles;
 using EmergencySystem.Domain.Access;
 using EmergencySystem.Domain.Administration;
@@ -407,6 +408,73 @@ public sealed class ApiIntegrationTests
         var patientAttempt = await patientClient.PostAsync(
             $"/api/v1/doctors/emergency-access/{grant.Id}/ai-summary", null);
         Assert.Equal(HttpStatusCode.Forbidden, patientAttempt.StatusCode);
+    }
+
+    [Fact]
+    public async Task Patient_documents_are_validated_and_doctor_download_requires_active_access()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var patientClient = CreateClient(factory);
+        using var doctorClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+        await LoginAsync(doctorClient, EmergencySystemApiFactory.DoctorEmail);
+
+        using var disguisedUpload = new MultipartFormDataContent();
+        var disguisedImage = new ByteArrayContent(
+            new byte[] { 0xFF, 0xD8, 0xFF, 0x00 });
+        disguisedImage.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        disguisedUpload.Add(disguisedImage, "file", "disguised-image.pdf");
+        var disguisedResponse = await patientClient.PostAsync(
+            "/api/v1/patients/me/documents", disguisedUpload);
+        Assert.Equal(HttpStatusCode.BadRequest, disguisedResponse.StatusCode);
+
+        using var upload = new MultipartFormDataContent();
+        var pdf = new ByteArrayContent("%PDF-1.7 synthetic medical report"u8.ToArray());
+        pdf.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        upload.Add(pdf, "file", "laboratory-report.pdf");
+        upload.Add(new StringContent("Lab result"), "category");
+        upload.Add(new StringContent("Synthetic thesis demonstration"), "description");
+        var uploadResponse = await patientClient.PostAsync(
+            "/api/v1/patients/me/documents", upload);
+        var document = await uploadResponse.Content
+            .ReadFromJsonAsync<MedicalDocumentResponse>(JsonOptions);
+        Assert.Equal(HttpStatusCode.Created, uploadResponse.StatusCode);
+        Assert.NotNull(document);
+
+        var denied = await doctorClient.GetAsync(
+            $"/api/v1/doctors/emergency-access/{Guid.NewGuid()}/documents");
+        Assert.Equal(HttpStatusCode.NotFound, denied.StatusCode);
+
+        var grantResponse = await patientClient.PostAsJsonAsync(
+            "/api/v1/patients/me/emergency-access",
+            new GrantEmergencyAccessRequest(EmergencySystemApiFactory.DoctorEmail, 60),
+            JsonOptions);
+        var grant = await grantResponse.Content
+            .ReadFromJsonAsync<EmergencyAccessGrantResponse>(JsonOptions);
+        Assert.NotNull(grant);
+
+        var doctorDocuments = await doctorClient
+            .GetFromJsonAsync<MedicalDocumentResponse[]>(
+                $"/api/v1/doctors/emergency-access/{grant.Id}/documents",
+                JsonOptions);
+        Assert.Single(Assert.IsType<MedicalDocumentResponse[]>(doctorDocuments));
+        var download = await doctorClient.GetAsync(
+            $"/api/v1/doctors/emergency-access/{grant.Id}/documents/{document.Id}/content");
+        Assert.Equal(HttpStatusCode.OK, download.StatusCode);
+        Assert.StartsWith("%PDF", await download.Content.ReadAsStringAsync());
+
+        var dashboard = await patientClient.GetFromJsonAsync<PatientAccessDashboardResponse>(
+            "/api/v1/patients/me/emergency-access", JsonOptions);
+        Assert.Contains(dashboard!.AuditHistory,
+            item => item.Action == AccessAuditAction.MedicalDocumentDownloaded);
+
+        var deleted = await patientClient.DeleteAsync(
+            $"/api/v1/patients/me/documents/{document.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+        var missing = await doctorClient.GetAsync(
+            $"/api/v1/doctors/emergency-access/{grant.Id}/documents/{document.Id}/content");
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
     }
 
     [Fact]

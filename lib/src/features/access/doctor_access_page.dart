@@ -9,6 +9,8 @@ import '../clinical/clinical_encounter_dialog.dart';
 import '../clinical/clinical_history_panel.dart';
 import '../clinical/clinical_models.dart';
 import '../clinical/clinical_repository.dart';
+import '../documents/document_repository.dart';
+import '../documents/medical_documents_panel.dart';
 import 'access_models.dart';
 import 'access_repository.dart';
 import 'ai_medical_summary_dialog.dart';
@@ -22,6 +24,7 @@ class DoctorAccessPage extends StatefulWidget {
     this.initialMedicalQrToken,
     this.scannerBuilder,
     this.scannerExpectedBaseUri,
+    this.documentRepository,
     super.key,
   });
 
@@ -31,6 +34,7 @@ class DoctorAccessPage extends StatefulWidget {
   final String? initialMedicalQrToken;
   final MedicalQrScannerViewBuilder? scannerBuilder;
   final Uri? scannerExpectedBaseUri;
+  final DocumentRepository? documentRepository;
 
   @override
   State<DoctorAccessPage> createState() => _DoctorAccessPageState();
@@ -284,6 +288,13 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
                     onCreateEncounter: _createEncounter,
                     onGenerateAiSummary: _generateAiSummary,
                   ),
+                  if (widget.documentRepository case final repository?) ...[
+                    const SizedBox(height: 18),
+                    MedicalDocumentsPanel(
+                      repository: repository,
+                      doctorGrantId: _selectedAccess!.id,
+                    ),
+                  ],
                 ] else if ((_access, _patients) case (
                   final access?,
                   final patients?,

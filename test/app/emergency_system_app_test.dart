@@ -200,5 +200,6 @@ class _Harness {
     accessRepository: FakeAccessRepository(),
     clinicalRepository: FakeClinicalRepository(),
     administrationRepository: administrationRepository,
+    documentRepository: FakeDocumentRepository(),
   );
 }

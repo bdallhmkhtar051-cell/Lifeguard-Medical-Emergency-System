@@ -18,7 +18,7 @@ audit system.
 - **Later client:** a focused Flutter Android/iOS patient application using the
   same API
 
-Eight development checkpoints are implemented. A seeded patient can sign in,
+Nine development checkpoints are implemented. A seeded patient can sign in,
 maintain an SQL-backed emergency profile, grant a doctor time-limited access,
 revoke it, and inspect the resulting access history. Doctors see only
 authorized snapshots, can append clinical encounters, and every opened
@@ -67,7 +67,15 @@ Implemented at checkpoints 06 to 08:
 - doctor-only, rate-limited AI summaries generated from an actively authorized
   medical record, with clinical verification warnings.
 
-Passkeys, document upload, and production deployment are later milestones.
+Implemented at checkpoint 09:
+
+- patient upload, listing, download, and soft deletion of PDF, JPEG, and PNG
+  medical documents;
+- read-only doctor document access enforced by an active patient access grant;
+- server validation of file size, extension, MIME type, and binary signature;
+- SQL Server document persistence and audited doctor downloads.
+
+Passkeys and production hardening/deployment are later milestones.
 
 ## Start here
 
@@ -76,12 +84,13 @@ Passkeys, document upload, and production deployment are later milestones.
 2. Demonstrate the [checkpoint 02 access workflow](docs/DEVELOPMENT_CHECKPOINT_02.md).
 3. Demonstrate the [checkpoint 05 secure QR workflow](docs/DEVELOPMENT_CHECKPOINT_05.md).
 4. Review the [checkpoint 08 AI summary workflow](docs/DEVELOPMENT_CHECKPOINT_08.md).
-5. Review the [recommended architecture](docs/ARCHITECTURE.md).
-6. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
-7. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
-8. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
+5. Demonstrate the [checkpoint 09 medical-document workflow](docs/DEVELOPMENT_CHECKPOINT_09.md).
+6. Review the [recommended architecture](docs/ARCHITECTURE.md).
+7. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
+8. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
+9. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
    correct medical project-description document.
-9. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) for
+10. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) for
    the later, optional milestone.
 
 ## Run locally

@@ -8,6 +8,7 @@ import '../features/administration/administration_repository.dart';
 import '../features/access/access_repository.dart';
 import '../features/clinical/clinical_repository.dart';
 import '../features/home/home_shell.dart';
+import '../features/documents/document_repository.dart';
 import '../features/patient_profile/patient_profile_repository.dart';
 import 'app_controller.dart';
 
@@ -19,6 +20,7 @@ class EmergencySystemApp extends StatelessWidget {
     required this.accessRepository,
     required this.clinicalRepository,
     required this.administrationRepository,
+    required this.documentRepository,
     this.initialMedicalQrToken,
     super.key,
   });
@@ -29,6 +31,7 @@ class EmergencySystemApp extends StatelessWidget {
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
   final AdministrationRepository administrationRepository;
+  final DocumentRepository documentRepository;
   final String? initialMedicalQrToken;
 
   @override
@@ -44,6 +47,7 @@ class EmergencySystemApp extends StatelessWidget {
         accessRepository: accessRepository,
         clinicalRepository: clinicalRepository,
         administrationRepository: administrationRepository,
+        documentRepository: documentRepository,
         initialMedicalQrToken: initialMedicalQrToken,
       ),
     );
@@ -58,6 +62,7 @@ class _AppRoot extends StatelessWidget {
     required this.accessRepository,
     required this.clinicalRepository,
     required this.administrationRepository,
+    required this.documentRepository,
     required this.initialMedicalQrToken,
   });
 
@@ -67,6 +72,7 @@ class _AppRoot extends StatelessWidget {
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
   final AdministrationRepository administrationRepository;
+  final DocumentRepository documentRepository;
   final String? initialMedicalQrToken;
 
   @override
@@ -96,6 +102,7 @@ class _AppRoot extends StatelessWidget {
                     accessRepository: accessRepository,
                     clinicalRepository: clinicalRepository,
                     administrationRepository: administrationRepository,
+                    documentRepository: documentRepository,
                     initialMedicalQrToken: initialMedicalQrToken,
                   );
                 }

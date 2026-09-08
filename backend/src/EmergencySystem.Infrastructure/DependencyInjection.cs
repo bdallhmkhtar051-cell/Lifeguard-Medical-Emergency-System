@@ -13,6 +13,8 @@ using EmergencySystem.Infrastructure.Ai;
 using EmergencySystem.Infrastructure.Access;
 using EmergencySystem.Infrastructure.Authentication;
 using EmergencySystem.Infrastructure.Clinical;
+using EmergencySystem.Infrastructure.Documents;
+using EmergencySystem.Application.Documents;
 using EmergencySystem.Infrastructure.Configuration;
 using EmergencySystem.Infrastructure.Identity;
 using EmergencySystem.Infrastructure.Persistence;
@@ -143,6 +145,7 @@ public static class DependencyInjection
         services.AddScoped<IEmergencyProfileService, EmergencyProfileService>();
         services.AddScoped<IEmergencyAccessService, EmergencyAccessService>();
         services.AddScoped<IClinicalRecordService, ClinicalRecordService>();
+        services.AddScoped<IMedicalDocumentService, MedicalDocumentService>();
         services.AddScoped<IAdministrationService, AdministrationService>();
         services.AddHttpClient<IAiMedicalSummaryService, GeminiMedicalSummaryService>(client =>
         {

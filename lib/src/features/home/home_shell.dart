@@ -9,6 +9,7 @@ import '../access/doctor_access_page.dart';
 import '../clinical/clinical_repository.dart';
 import '../patient_profile/patient_profile_page.dart';
 import '../patient_profile/patient_profile_repository.dart';
+import '../documents/document_repository.dart';
 
 class HomeShell extends StatelessWidget {
   const HomeShell({
@@ -17,6 +18,7 @@ class HomeShell extends StatelessWidget {
     required this.accessRepository,
     required this.clinicalRepository,
     required this.administrationRepository,
+    required this.documentRepository,
     this.initialMedicalQrToken,
     super.key,
   });
@@ -26,6 +28,7 @@ class HomeShell extends StatelessWidget {
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
   final AdministrationRepository administrationRepository;
+  final DocumentRepository documentRepository;
   final String? initialMedicalQrToken;
 
   @override
@@ -48,6 +51,7 @@ class HomeShell extends StatelessWidget {
               repository: patientProfileRepository,
               accessRepository: accessRepository,
               clinicalRepository: clinicalRepository,
+              documentRepository: documentRepository,
             )
           : role == UserRole.doctor
           ? DoctorAccessPage(
@@ -55,6 +59,7 @@ class HomeShell extends StatelessWidget {
               clinicalRepository: clinicalRepository,
               user: user,
               initialMedicalQrToken: initialMedicalQrToken,
+              documentRepository: documentRepository,
             )
           : role == UserRole.administrator
           ? AdministrationPage(

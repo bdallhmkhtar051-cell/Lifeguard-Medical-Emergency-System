@@ -1,6 +1,7 @@
 using EmergencySystem.Domain.Administration;
 using EmergencySystem.Domain.Access;
 using EmergencySystem.Domain.Clinical;
+using EmergencySystem.Domain.Documents;
 using EmergencySystem.Domain.Patients;
 using EmergencySystem.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -37,6 +38,8 @@ public sealed class ApplicationDbContext(
     public DbSet<ClinicalObservation> ClinicalObservations => Set<ClinicalObservation>();
 
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
+
+    public DbSet<MedicalDocument> MedicalDocuments => Set<MedicalDocument>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

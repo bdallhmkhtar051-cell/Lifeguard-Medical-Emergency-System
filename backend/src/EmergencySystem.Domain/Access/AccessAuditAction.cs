@@ -8,4 +8,5 @@ public enum AccessAuditAction
     BreakGlassActivated,
     QrRedeemed,
     ClinicalRecordCreated,
+    MedicalDocumentDownloaded,
 }

@@ -90,6 +90,7 @@ Keep the repository simple:
         consent/
         clinical_records/
         audit/
+        documents/
         administration/
   backend/
     EmergencySystem.sln
@@ -165,7 +166,12 @@ Administration and clinical care are different responsibilities.
    - Account activation/deactivation.
    - Security/audit overview without editing clinical content.
 
-## Initial data model
+8. **Medical documents**
+   - Patients upload and manage PDF, JPEG, and PNG supporting documents.
+   - Doctors receive read-only document access through an active grant.
+   - Successful doctor downloads create server-side audit events.
+
+## Current data model
 
 The precise ERD will be finalized with the medical requirements, but the MVP
 needs these concepts:
@@ -183,6 +189,7 @@ needs these concepts:
 - `ClinicalObservation`
 - `Prescription`
 - `AuditEvent`
+- `MedicalDocument`
 
 Use database-generated identifiers, UTC timestamps, foreign keys, constraints,
 and optimistic concurrency where records can be edited. Use synthetic thesis
@@ -200,7 +207,8 @@ data only.
 - Break-glass reason, confirmation, and server-side audit event.
 - Rate limiting on sign-in and access-code endpoints.
 - Input validation, bounded upload sizes, and safe file types if uploads are
-  later enabled.
+  enabled. The implemented document workflow also checks that the extension,
+  MIME type, and file signature agree.
 - No medical data, tokens, passwords, or connection strings in logs.
 - Secrets kept out of Git and out of the compiled Flutter application.
 - Backups and restoration should be demonstrated with synthetic data before
@@ -210,7 +218,7 @@ This is a thesis prototype, not a certified clinical or emergency-dispatch
 product. Production use would require legal, privacy, clinical-safety,
 security, accessibility, and operational review in the deployment country.
 
-## Passkeys and future AI
+## Passkeys and guarded AI
 
 The targeted biometric capability is WebAuthn/passkey authentication backed by
 the device's Windows Hello, phone biometric, security key, or PIN. It is one
@@ -218,9 +226,12 @@ cross-platform authentication flow, not separate face-recognition and
 fingerprint subsystems. See
 [BIOMETRICS_AND_AI_ROADMAP.md](BIOMETRICS_AND_AI_ROADMAP.md).
 
-AI remains future work. A future AI adapter would sit behind ASP.NET
-authorization, minimization, auditing, feature flags, and human review. The
-Flutter client must never call an AI provider directly with medical data.
+The implemented AI summary adapter sits behind ASP.NET authorization,
+minimization, rate limiting, and human-review warnings. It summarizes only an
+actively authorized medical record and does not diagnose or recommend
+treatment. The generated text is not stored as part of the clinical record.
+The Flutter client never receives the provider secret or calls Gemini
+directly.
 
 ## Explicitly deferred
 

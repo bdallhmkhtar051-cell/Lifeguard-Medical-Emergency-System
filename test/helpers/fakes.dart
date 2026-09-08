@@ -8,6 +8,8 @@ import 'package:emergency_system/src/features/access/access_repository.dart';
 import 'package:emergency_system/src/features/health/health_repository.dart';
 import 'package:emergency_system/src/features/clinical/clinical_models.dart';
 import 'package:emergency_system/src/features/clinical/clinical_repository.dart';
+import 'package:emergency_system/src/features/documents/document_models.dart';
+import 'package:emergency_system/src/features/documents/document_repository.dart';
 import 'package:emergency_system/src/features/patient_profile/emergency_profile.dart';
 import 'package:emergency_system/src/features/patient_profile/patient_profile_repository.dart';
 
@@ -279,7 +281,6 @@ class FakeAccessRepository implements AccessRepository {
     );
   }
 
-
   @override
   Future<AiMedicalSummary> generateAiSummary(String grantId) async {
     aiSummaryCalls++;
@@ -329,6 +330,54 @@ class FakeClinicalRepository implements ClinicalRepository {
     records = [record, ...records];
     return record;
   }
+}
+
+class FakeDocumentRepository implements DocumentRepository {
+  final List<MedicalDocument> documents = [];
+  int uploadCalls = 0;
+
+  @override
+  Future<List<MedicalDocument>> patientDocuments() async => documents;
+
+  @override
+  Future<List<MedicalDocument>> doctorDocuments(String grantId) async =>
+      documents;
+
+  @override
+  Future<MedicalDocument> upload({
+    required List<int> bytes,
+    required String fileName,
+    required String contentType,
+    required String category,
+    String? description,
+  }) async {
+    uploadCalls++;
+    final item = MedicalDocument(
+      id: 'document-$uploadCalls',
+      fileName: fileName,
+      contentType: contentType,
+      category: category,
+      description: description,
+      sizeBytes: bytes.length,
+      uploadedAt: DateTime.utc(2026, 9, 8),
+    );
+    documents.insert(0, item);
+    return item;
+  }
+
+  @override
+  Future<void> delete(String documentId) async {
+    documents.removeWhere((item) => item.id == documentId);
+  }
+
+  @override
+  Future<List<int>> downloadForPatient(String documentId) async => [1, 2, 3];
+
+  @override
+  Future<List<int>> downloadForDoctor(
+    String grantId,
+    String documentId,
+  ) async => [1, 2, 3];
 }
 
 class FakeAdministrationRepository implements AdministrationRepository {

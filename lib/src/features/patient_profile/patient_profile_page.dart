@@ -8,6 +8,8 @@ import '../access/medical_qr_dialog.dart';
 import '../access/patient_access_panel.dart';
 import '../clinical/clinical_history_panel.dart';
 import '../clinical/clinical_repository.dart';
+import '../documents/document_repository.dart';
+import '../documents/medical_documents_panel.dart';
 import 'emergency_profile.dart';
 import 'patient_medical_id_header.dart';
 import 'patient_profile_controller.dart';
@@ -19,12 +21,14 @@ class PatientProfilePage extends StatefulWidget {
     required this.repository,
     required this.accessRepository,
     required this.clinicalRepository,
+    required this.documentRepository,
     super.key,
   });
 
   final PatientProfileRepository repository;
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
+  final DocumentRepository documentRepository;
 
   @override
   State<PatientProfilePage> createState() => _PatientProfilePageState();
@@ -107,6 +111,7 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                         profile: profile,
                         accessRepository: widget.accessRepository,
                         clinicalRepository: widget.clinicalRepository,
+                        documentRepository: widget.documentRepository,
                         warning: _controller.errorMessage,
                         onEdit: () {
                           _controller.dismissError();
@@ -123,7 +128,7 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
   }
 }
 
-enum _PatientTab { overview, clinicalHistory, access }
+enum _PatientTab { overview, clinicalHistory, documents, access }
 
 /// Uses the reference portal hierarchy while values still come from the API.
 class _PatientPortal extends StatefulWidget {
@@ -131,6 +136,7 @@ class _PatientPortal extends StatefulWidget {
     required this.profile,
     required this.accessRepository,
     required this.clinicalRepository,
+    required this.documentRepository,
     required this.warning,
     required this.onEdit,
     required this.onRefresh,
@@ -139,6 +145,7 @@ class _PatientPortal extends StatefulWidget {
   final EmergencyProfile profile;
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
+  final DocumentRepository documentRepository;
   final String? warning;
   final VoidCallback onEdit;
   final VoidCallback onRefresh;
@@ -184,6 +191,9 @@ class _PatientPortalState extends State<_PatientPortal> {
           _PatientTab.overview => _OverviewGrid(profile: widget.profile),
           _PatientTab.clinicalHistory => PatientClinicalHistory(
             repository: widget.clinicalRepository,
+          ),
+          _PatientTab.documents => MedicalDocumentsPanel(
+            repository: widget.documentRepository,
           ),
           _PatientTab.access => PatientAccessPanel(
             repository: widget.accessRepository,
@@ -233,6 +243,11 @@ class _PortalTabs extends StatelessWidget {
             tab: _PatientTab.clinicalHistory,
             label: 'Clinical history',
             icon: Icons.history_edu_outlined,
+          ),
+          _item(
+            tab: _PatientTab.documents,
+            label: 'Documents',
+            icon: Icons.folder_copy_outlined,
           ),
           _item(
             tab: _PatientTab.access,

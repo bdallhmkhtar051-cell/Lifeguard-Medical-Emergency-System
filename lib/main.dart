@@ -13,6 +13,7 @@ import 'src/features/administration/administration_repository.dart';
 import 'src/features/access/access_repository.dart';
 import 'src/features/clinical/clinical_repository.dart';
 import 'src/features/health/health_repository.dart';
+import 'src/features/documents/document_repository.dart';
 import 'src/features/patient_profile/patient_profile_repository.dart';
 
 void main() {
@@ -41,6 +42,7 @@ void main() {
       accessRepository: ApiAccessRepository(apiClient),
       clinicalRepository: ApiClinicalRepository(apiClient),
       administrationRepository: ApiAdministrationRepository(apiClient),
+      documentRepository: ApiDocumentRepository(apiClient),
       initialMedicalQrToken: _medicalQrTokenFrom(Uri.base),
     ),
   );

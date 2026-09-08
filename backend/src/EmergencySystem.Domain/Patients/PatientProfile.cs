@@ -1,5 +1,6 @@
 using EmergencySystem.Domain.Access;
 using EmergencySystem.Domain.Clinical;
+using EmergencySystem.Domain.Documents;
 
 namespace EmergencySystem.Domain.Patients;
 
@@ -36,4 +37,6 @@ public sealed class PatientProfile
     public ICollection<MedicalQrToken> MedicalQrTokens { get; set; } = [];
 
     public ICollection<ClinicalEncounter> ClinicalEncounters { get; set; } = [];
+
+    public ICollection<MedicalDocument> MedicalDocuments { get; set; } = [];
 }
