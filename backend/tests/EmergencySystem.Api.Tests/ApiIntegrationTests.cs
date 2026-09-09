@@ -780,11 +780,20 @@ public sealed class ApiIntegrationTests
         await factory.InitializeAsync();
         using var client = CreateClient(factory);
 
-        using var allowedRequest = CreatePreflight("http://localhost:5000");
+        // Simulate the browser checking whether Flutter Web may delete a document.
+        using var allowedRequest = CreatePreflight(
+            "http://localhost:5000",
+            "DELETE");
         var allowedResponse = await client.SendAsync(allowedRequest);
         Assert.Equal(
             "http://localhost:5000",
             allowedResponse.Headers.GetValues("Access-Control-Allow-Origin").Single());
+        Assert.Contains(
+            "DELETE",
+            string.Join(
+                ",",
+                allowedResponse.Headers.GetValues(
+                    "Access-Control-Allow-Methods")));
 
         using var deniedRequest = CreatePreflight("https://untrusted.example");
         var deniedResponse = await client.SendAsync(deniedRequest);
@@ -879,13 +888,15 @@ public sealed class ApiIntegrationTests
             ],
         };
 
-    private static HttpRequestMessage CreatePreflight(string origin)
+    private static HttpRequestMessage CreatePreflight(
+        string origin,
+        string requestedMethod = "GET")
     {
         var request = new HttpRequestMessage(HttpMethod.Options, "/health");
         request.Headers.TryAddWithoutValidation("Origin", origin);
         request.Headers.TryAddWithoutValidation(
             "Access-Control-Request-Method",
-            "GET");
+            requestedMethod);
         return request;
     }
 

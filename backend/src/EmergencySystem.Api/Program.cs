@@ -47,7 +47,8 @@ builder.Services.AddCors(options =>
         "FlutterWeb",
         policy => policy
             .WithOrigins(allowedOrigins)
-            .WithMethods("GET", "POST", "PUT", "OPTIONS")
+            // Allow every HTTP method currently used by Flutter Web.
+            .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .WithHeaders("Authorization", "Content-Type", "If-Match", "If-None-Match")
             .WithExposedHeaders("ETag")
             .SetPreflightMaxAge(TimeSpan.FromMinutes(10)));
