@@ -10,6 +10,7 @@ import '../clinical/clinical_history_panel.dart';
 import '../clinical/clinical_repository.dart';
 import '../documents/document_repository.dart';
 import '../documents/medical_documents_panel.dart';
+import '../home/workspace_navigation.dart';
 import 'emergency_profile.dart';
 import 'patient_medical_id_header.dart';
 import 'patient_profile_controller.dart';
@@ -22,6 +23,7 @@ class PatientProfilePage extends StatefulWidget {
     required this.accessRepository,
     required this.clinicalRepository,
     required this.documentRepository,
+    required this.navigationController,
     super.key,
   });
 
@@ -29,6 +31,7 @@ class PatientProfilePage extends StatefulWidget {
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
   final DocumentRepository documentRepository;
+  final WorkspaceNavigationController navigationController;
 
   @override
   State<PatientProfilePage> createState() => _PatientProfilePageState();
@@ -112,6 +115,7 @@ class _PatientProfilePageState extends State<PatientProfilePage> {
                         accessRepository: widget.accessRepository,
                         clinicalRepository: widget.clinicalRepository,
                         documentRepository: widget.documentRepository,
+                        navigationController: widget.navigationController,
                         warning: _controller.errorMessage,
                         onEdit: () {
                           _controller.dismissError();
@@ -137,6 +141,7 @@ class _PatientPortal extends StatefulWidget {
     required this.accessRepository,
     required this.clinicalRepository,
     required this.documentRepository,
+    required this.navigationController,
     required this.warning,
     required this.onEdit,
     required this.onRefresh,
@@ -146,6 +151,7 @@ class _PatientPortal extends StatefulWidget {
   final AccessRepository accessRepository;
   final ClinicalRepository clinicalRepository;
   final DocumentRepository documentRepository;
+  final WorkspaceNavigationController navigationController;
   final String? warning;
   final VoidCallback onEdit;
   final VoidCallback onRefresh;
@@ -155,64 +161,83 @@ class _PatientPortal extends StatefulWidget {
 }
 
 class _PatientPortalState extends State<_PatientPortal> {
-  _PatientTab _tab = _PatientTab.overview;
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        PatientMedicalIdHeader(
-          profile: widget.profile,
-          onEdit: widget.onEdit,
-          onRefresh: widget.onRefresh,
-          onDisplayQr: () => showDialog<void>(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) =>
-                MedicalQrDialog(repository: widget.accessRepository),
-          ),
-        ),
-        if (widget.warning != null) ...[
-          const SizedBox(height: 16),
-          AsyncErrorPanel(
-            message: widget.warning!,
-            compact: true,
-            onRetry: widget.onRefresh,
-          ),
-        ],
-        const SizedBox(height: 18),
-        _PortalTabs(
-          active: _tab,
-          onChanged: (value) => setState(() => _tab = value),
-        ),
-        const SizedBox(height: 18),
-        switch (_tab) {
-          _PatientTab.overview => _OverviewGrid(profile: widget.profile),
-          _PatientTab.clinicalHistory => PatientClinicalHistory(
-            repository: widget.clinicalRepository,
-          ),
-          _PatientTab.documents => MedicalDocumentsPanel(
-            repository: widget.documentRepository,
-          ),
-          _PatientTab.access => PatientAccessPanel(
-            repository: widget.accessRepository,
-          ),
-        },
-        if (widget.profile.updatedAtUtc case final updated?) ...[
-          const SizedBox(height: 16),
-          Text(
-            'LAST UPDATED ${_dateTime(updated).toUpperCase()}',
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'monospace',
+    return ListenableBuilder(
+      listenable: widget.navigationController,
+      builder: (context, _) {
+        final tab = switch (widget.navigationController.destination) {
+          WorkspaceDestination.patientClinicalHistory =>
+            _PatientTab.clinicalHistory,
+          WorkspaceDestination.patientDocuments => _PatientTab.documents,
+          WorkspaceDestination.patientAccess => _PatientTab.access,
+          _ => _PatientTab.overview,
+        };
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PatientMedicalIdHeader(
+              profile: widget.profile,
+              onEdit: widget.onEdit,
+              onRefresh: widget.onRefresh,
+              onDisplayQr: () => showDialog<void>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) =>
+                    MedicalQrDialog(repository: widget.accessRepository),
+              ),
             ),
-          ),
-        ],
-      ],
+            if (widget.warning != null) ...[
+              const SizedBox(height: 16),
+              AsyncErrorPanel(
+                message: widget.warning!,
+                compact: true,
+                onRetry: widget.onRefresh,
+              ),
+            ],
+            const SizedBox(height: 18),
+            _PortalTabs(
+              active: tab,
+              onChanged: (value) => widget.navigationController.select(
+                switch (value) {
+                  _PatientTab.overview => WorkspaceDestination.patientOverview,
+                  _PatientTab.clinicalHistory =>
+                    WorkspaceDestination.patientClinicalHistory,
+                  _PatientTab.documents =>
+                    WorkspaceDestination.patientDocuments,
+                  _PatientTab.access => WorkspaceDestination.patientAccess,
+                },
+              ),
+            ),
+            const SizedBox(height: 18),
+            switch (tab) {
+              _PatientTab.overview => _OverviewGrid(profile: widget.profile),
+              _PatientTab.clinicalHistory => PatientClinicalHistory(
+                repository: widget.clinicalRepository,
+              ),
+              _PatientTab.documents => MedicalDocumentsPanel(
+                repository: widget.documentRepository,
+              ),
+              _PatientTab.access => PatientAccessPanel(
+                repository: widget.accessRepository,
+              ),
+            },
+            if (widget.profile.updatedAtUtc case final updated?) ...[
+              const SizedBox(height: 16),
+              Text(
+                'LAST UPDATED ${_dateTime(updated).toUpperCase()}',
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }

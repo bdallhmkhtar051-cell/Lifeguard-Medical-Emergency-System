@@ -11,6 +11,7 @@ import '../clinical/clinical_models.dart';
 import '../clinical/clinical_repository.dart';
 import '../documents/document_repository.dart';
 import '../documents/medical_documents_panel.dart';
+import '../home/workspace_navigation.dart';
 import 'access_models.dart';
 import 'access_repository.dart';
 import 'ai_medical_summary_dialog.dart';
@@ -25,6 +26,7 @@ class DoctorAccessPage extends StatefulWidget {
     this.scannerBuilder,
     this.scannerExpectedBaseUri,
     this.documentRepository,
+    this.navigationController,
     super.key,
   });
 
@@ -35,12 +37,16 @@ class DoctorAccessPage extends StatefulWidget {
   final MedicalQrScannerViewBuilder? scannerBuilder;
   final Uri? scannerExpectedBaseUri;
   final DocumentRepository? documentRepository;
+  final WorkspaceNavigationController? navigationController;
 
   @override
   State<DoctorAccessPage> createState() => _DoctorAccessPageState();
 }
 
 class _DoctorAccessPageState extends State<DoctorAccessPage> {
+  late final WorkspaceNavigationController _navigation =
+      widget.navigationController ??
+      WorkspaceNavigationController(WorkspaceDestination.doctorPatients);
   List<DoctorAccess>? _access;
   List<DoctorPatient>? _patients;
   DoctorSnapshot? _snapshot;
@@ -52,7 +58,42 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
   @override
   void initState() {
     super.initState();
+    _navigation.addListener(_handleNavigation);
     unawaited(_initialize());
+  }
+
+  @override
+  void dispose() {
+    _navigation.removeListener(_handleNavigation);
+    if (widget.navigationController == null) _navigation.dispose();
+    super.dispose();
+  }
+
+  void _handleNavigation() {
+    switch (_navigation.destination) {
+      case WorkspaceDestination.doctorPatients:
+        if (_snapshot != null || _selectedAccess != null) {
+          setState(() {
+            _snapshot = null;
+            _selectedAccess = null;
+            _clinicalRecords = const [];
+          });
+        }
+        break;
+      case WorkspaceDestination.doctorScanQr:
+        unawaited(_scanFromDrawer());
+        break;
+      default:
+        break;
+    }
+  }
+
+  Future<void> _scanFromDrawer() async {
+    await _scanMedicalQr();
+    if (mounted &&
+        _navigation.destination == WorkspaceDestination.doctorScanQr) {
+      _navigation.select(WorkspaceDestination.doctorPatients);
+    }
   }
 
   Future<void> _initialize() async {

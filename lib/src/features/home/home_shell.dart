@@ -10,8 +10,9 @@ import '../clinical/clinical_repository.dart';
 import '../patient_profile/patient_profile_page.dart';
 import '../patient_profile/patient_profile_repository.dart';
 import '../documents/document_repository.dart';
+import 'workspace_navigation.dart';
 
-class HomeShell extends StatelessWidget {
+class HomeShell extends StatefulWidget {
   const HomeShell({
     required this.sessionController,
     required this.patientProfileRepository,
@@ -32,38 +33,79 @@ class HomeShell extends StatelessWidget {
   final String? initialMedicalQrToken;
 
   @override
+  State<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<HomeShell> {
+  late final WorkspaceNavigationController _navigation;
+
+  @override
+  void initState() {
+    super.initState();
+    _navigation = WorkspaceNavigationController(
+      switch (widget.sessionController.user!.singleRole) {
+        UserRole.patient => WorkspaceDestination.patientOverview,
+        UserRole.doctor => WorkspaceDestination.doctorPatients,
+        UserRole.administrator || null => WorkspaceDestination.administration,
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _navigation.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final user = sessionController.user!;
+    final user = widget.sessionController.user!;
     final role = user.singleRole;
     return Scaffold(
+      drawer: _WorkspaceDrawer(
+        user: user,
+        navigation: _navigation,
+        busy: widget.sessionController.isBusy,
+        onLogout: widget.sessionController.logout,
+      ),
       appBar: AppBar(
         toolbarHeight: 74,
         titleSpacing: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            key: const ValueKey('workspace-menu-button'),
+            tooltip: 'Open navigation menu',
+            onPressed: Scaffold.of(context).openDrawer,
+            icon: const Icon(Icons.menu),
+          ),
+        ),
         title: _PortalNavigation(
           user: user,
           role: role,
-          busy: sessionController.isBusy,
-          onLogout: sessionController.logout,
+          busy: widget.sessionController.isBusy,
+          onLogout: widget.sessionController.logout,
         ),
       ),
       body: role == UserRole.patient
           ? PatientProfilePage(
-              repository: patientProfileRepository,
-              accessRepository: accessRepository,
-              clinicalRepository: clinicalRepository,
-              documentRepository: documentRepository,
+              repository: widget.patientProfileRepository,
+              accessRepository: widget.accessRepository,
+              clinicalRepository: widget.clinicalRepository,
+              documentRepository: widget.documentRepository,
+              navigationController: _navigation,
             )
           : role == UserRole.doctor
           ? DoctorAccessPage(
-              repository: accessRepository,
-              clinicalRepository: clinicalRepository,
+              repository: widget.accessRepository,
+              clinicalRepository: widget.clinicalRepository,
               user: user,
-              initialMedicalQrToken: initialMedicalQrToken,
-              documentRepository: documentRepository,
+              initialMedicalQrToken: widget.initialMedicalQrToken,
+              documentRepository: widget.documentRepository,
+              navigationController: _navigation,
             )
           : role == UserRole.administrator
           ? AdministrationPage(
-              repository: administrationRepository,
+              repository: widget.administrationRepository,
               currentUser: user,
             )
           : _RoleLanding(user: user),
@@ -75,6 +117,246 @@ class HomeShell extends StatelessWidget {
     UserRole.doctor => Icons.medical_services_outlined,
     UserRole.administrator => Icons.admin_panel_settings_outlined,
   };
+}
+
+class _WorkspaceDrawer extends StatelessWidget {
+  const _WorkspaceDrawer({
+    required this.user,
+    required this.navigation,
+    required this.busy,
+    required this.onLogout,
+  });
+
+  final AppUser user;
+  final WorkspaceNavigationController navigation;
+  final bool busy;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    final role = user.singleRole;
+    final doctor = role == UserRole.doctor;
+    final accent = doctor ? const Color(0xFF2DD4BF) : const Color(0xFF60A5FA);
+    return Drawer(
+      key: const ValueKey('workspace-drawer'),
+      backgroundColor: const Color(0xFF0F172A),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 12, 18),
+              child: Row(
+                children: [
+                  _BrandMark(role: role),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          role == UserRole.patient
+                              ? 'PATIENT PORTAL'
+                              : role == UserRole.doctor
+                              ? 'DOCTOR CONSOLE'
+                              : 'ADMINISTRATION',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: .7,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          user.displayName,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close menu',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Color(0xFF94A3B8)),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Color(0xFF334155), height: 1),
+            Expanded(
+              child: ListenableBuilder(
+                listenable: navigation,
+                builder: (context, _) => ListView(
+                  padding: const EdgeInsets.all(12),
+                  children: [
+                    _DrawerSection(
+                      label: role == UserRole.patient
+                          ? 'MY MEDICAL RECORD'
+                          : role == UserRole.doctor
+                          ? 'EMERGENCY TOOLS'
+                          : 'SYSTEM MANAGEMENT',
+                    ),
+                    ..._destinations(role).map(
+                      (item) => _DrawerDestinationTile(
+                        item: item,
+                        selected: navigation.destination == item.destination,
+                        accent: accent,
+                        onTap: () {
+                          navigation.select(item.destination);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Divider(color: Color(0xFF334155), height: 1),
+            ListTile(
+              key: const ValueKey('drawer-logout-button'),
+              enabled: !busy,
+              leading: const Icon(Icons.logout, color: Color(0xFFF87171)),
+              title: const Text(
+                'Sign out',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              subtitle: Text(
+                user.email,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                onLogout();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static List<_DrawerItem> _destinations(UserRole? role) => switch (role) {
+    UserRole.patient => const [
+      _DrawerItem(
+        WorkspaceDestination.patientOverview,
+        'Medical overview',
+        Icons.dashboard_outlined,
+      ),
+      _DrawerItem(
+        WorkspaceDestination.patientClinicalHistory,
+        'Clinical history',
+        Icons.history_edu_outlined,
+      ),
+      _DrawerItem(
+        WorkspaceDestination.patientDocuments,
+        'My documents',
+        Icons.folder_copy_outlined,
+      ),
+      _DrawerItem(
+        WorkspaceDestination.patientAccess,
+        'Access permissions & audit',
+        Icons.key_outlined,
+      ),
+    ],
+    UserRole.doctor => const [
+      _DrawerItem(
+        WorkspaceDestination.doctorPatients,
+        'Authorized patients',
+        Icons.people_outline,
+      ),
+      _DrawerItem(
+        WorkspaceDestination.doctorScanQr,
+        'Scan Medical ID QR',
+        Icons.qr_code_scanner,
+      ),
+    ],
+    UserRole.administrator || null => const [
+      _DrawerItem(
+        WorkspaceDestination.administration,
+        'Administration overview',
+        Icons.admin_panel_settings_outlined,
+      ),
+    ],
+  };
+}
+
+class _DrawerSection extends StatelessWidget {
+  const _DrawerSection({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: Color(0xFF64748B),
+        fontSize: 10,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.2,
+      ),
+    ),
+  );
+}
+
+class _DrawerItem {
+  const _DrawerItem(this.destination, this.label, this.icon);
+  final WorkspaceDestination destination;
+  final String label;
+  final IconData icon;
+}
+
+class _DrawerDestinationTile extends StatelessWidget {
+  const _DrawerDestinationTile({
+    required this.item,
+    required this.selected,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final _DrawerItem item;
+  final bool selected;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: ListTile(
+      key: ValueKey('drawer-${item.destination.name}'),
+      selected: selected,
+      selectedTileColor: accent.withValues(alpha: .17),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      leading: Icon(
+        item.icon,
+        color: selected ? accent : const Color(0xFF94A3B8),
+      ),
+      title: Text(
+        item.label,
+        style: TextStyle(
+          color: selected ? Colors.white : const Color(0xFFCBD5E1),
+          fontSize: 13,
+          fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right,
+        size: 18,
+        color: selected ? accent : const Color(0xFF475569),
+      ),
+      onTap: onTap,
+    ),
+  );
 }
 
 class _BrandMark extends StatelessWidget {
@@ -241,7 +523,7 @@ class _RolePill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            HomeShell._roleIcon(role ?? UserRole.administrator),
+            _HomeShellState._roleIcon(role ?? UserRole.administrator),
             size: 14,
             color: accent,
           ),

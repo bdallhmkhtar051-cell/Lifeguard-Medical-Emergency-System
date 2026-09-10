@@ -141,6 +141,81 @@ void main() {
     expect(find.text('Welcome back'), findsOneWidget);
   });
 
+  testWidgets('patient drawer navigates between permitted workspace sections', (
+    tester,
+  ) async {
+    final harness = await _Harness.create(authenticate: true);
+    await tester.pumpWidget(harness.app);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('workspace-drawer')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('drawer-patientDocuments')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('drawer-doctorScanQr')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('drawer-patientDocuments')));
+    await tester.pumpAndSettle();
+    expect(find.text('MEDICAL DOCUMENTS'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('drawer-patientAccess')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('patient-access-panel')), findsOneWidget);
+  });
+
+  testWidgets('authenticated navigation remains usable at mobile width', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 760);
+    addTearDown(tester.view.reset);
+    final harness = await _Harness.create(authenticate: true);
+
+    await tester.pumpWidget(harness.app);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('workspace-drawer')), findsOneWidget);
+    expect(find.byKey(const ValueKey('drawer-patientAccess')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('doctor and administrator drawers expose only role-safe items', (
+    tester,
+  ) async {
+    final doctorHarness = await _Harness.create(
+      auth: FakeAuthRepository(user: sampleDoctor),
+      authenticate: true,
+    );
+    await tester.pumpWidget(doctorHarness.app);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('drawer-doctorScanQr')), findsOneWidget);
+    expect(find.byKey(const ValueKey('drawer-patientAccess')), findsNothing);
+
+    // Remove the doctor app before mounting a separate authenticated session.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    final adminHarness = await _Harness.create(
+      auth: FakeAuthRepository(user: sampleAdministrator),
+      authenticate: true,
+    );
+    await tester.pumpWidget(adminHarness.app);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('drawer-administration')), findsOneWidget);
+    expect(find.byKey(const ValueKey('drawer-doctorScanQr')), findsNothing);
+    expect(find.byKey(const ValueKey('drawer-patientOverview')), findsNothing);
+  });
+
   testWidgets('administrator can review users and deactivate an account', (
     tester,
   ) async {
