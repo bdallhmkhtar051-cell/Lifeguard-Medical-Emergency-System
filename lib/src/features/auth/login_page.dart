@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/emergency_system_app.dart';
+import 'biometric_simulation_dialog.dart';
 import 'session_controller.dart';
 
 class LoginPage extends StatefulWidget {
@@ -262,6 +263,21 @@ class _LoginFormPanel extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Text('Sign in'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: const ValueKey('biometric-simulation-button'),
+              onPressed: busy
+                  ? null
+                  : () => BiometricSimulationDialog.show(context),
+              icon: const Icon(Icons.face_outlined),
+              label: const Text('Preview biometric sign-in'),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Simulation only — password authentication is still required.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 20),
             Wrap(

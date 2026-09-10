@@ -70,6 +70,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('biometric preview is clearly simulated and never signs in', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    final harness = await _Harness.create(auth: auth);
+    await tester.pumpWidget(harness.app);
+
+    await tester.tap(find.byKey(const ValueKey('biometric-simulation-button')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('biometric-simulation-dialog')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Demonstration only'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('simulate-biometric-failure')));
+    await tester.pump(const Duration(milliseconds: 1500));
+    expect(find.text('Simulation could not verify the user'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('start-biometric-simulation')));
+    await tester.pump(const Duration(milliseconds: 1500));
+    expect(find.text('Simulation successful'), findsOneWidget);
+    expect(auth.loginCalls, 0);
+    expect(harness.sessionController.status, SessionStatus.signedOut);
+  });
+
   testWidgets('doctor role never receives the patient profile editor', (
     tester,
   ) async {

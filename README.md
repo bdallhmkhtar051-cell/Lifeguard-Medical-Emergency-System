@@ -10,15 +10,15 @@ audit system.
 - **Backend:** ASP.NET Core 10 Web API
 - **Data:** Entity Framework Core and SQL Server
 - **Authentication:** ASP.NET Core Identity with server-enforced roles
-- **Enhanced authentication:** WebAuthn/passkeys backed by device verification
-  after the core password flow is stable
+- **Biometric concept:** a clearly labelled UI simulation; passwords remain the
+  only implemented sign-in method and no biometric data is collected
 - **Firebase:** not part of the MVP; Cloud Messaging may be added for a later
   patient mobile application
 - **AI:** guarded Gemini medical summaries generated through the ASP.NET backend
 - **Later client:** a focused Flutter Android/iOS patient application using the
   same API
 
-Nine development checkpoints are implemented. A seeded patient can sign in,
+Ten development checkpoints are implemented. A seeded patient can sign in,
 maintain an SQL-backed emergency profile, grant a doctor time-limited access,
 revoke it, and inspect the resulting access history. Doctors see only
 authorized snapshots, can append clinical encounters, and every opened
@@ -75,7 +75,14 @@ Implemented at checkpoint 09:
 - server validation of file size, extension, MIME type, and binary signature;
 - SQL Server document persistence and audited doctor downloads.
 
-Passkeys and production hardening/deployment are later milestones.
+Implemented at checkpoint 10:
+
+- an explicitly labelled biometric sign-in simulation on the login screen;
+- ready, scanning, success, failure, and cancellation states;
+- a security boundary that prevents the simulation from creating a session;
+- automated proof that the real authentication repository is never called.
+
+Real WebAuthn/passkeys and production hardening/deployment are future work.
 
 ## Start here
 
@@ -85,13 +92,14 @@ Passkeys and production hardening/deployment are later milestones.
 3. Demonstrate the [checkpoint 05 secure QR workflow](docs/DEVELOPMENT_CHECKPOINT_05.md).
 4. Review the [checkpoint 08 AI summary workflow](docs/DEVELOPMENT_CHECKPOINT_08.md).
 5. Demonstrate the [checkpoint 09 medical-document workflow](docs/DEVELOPMENT_CHECKPOINT_09.md).
-6. Review the [recommended architecture](docs/ARCHITECTURE.md).
-7. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
-8. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
-9. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
+6. Demonstrate the [checkpoint 10 biometric simulation](docs/DEVELOPMENT_CHECKPOINT_10.md).
+7. Review the [recommended architecture](docs/ARCHITECTURE.md).
+8. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
+9. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
+10. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
    correct medical project-description document.
-10. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) for
-   the later, optional milestone.
+11. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
+   the design for a future real passkey implementation.
 
 ## Run locally
 
