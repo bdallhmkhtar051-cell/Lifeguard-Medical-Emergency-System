@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'emergency_profile.dart';
+import 'medical_summary_dialog.dart';
 
 const _navy = Color(0xFF0F172A);
 const _slate = Color(0xFF1E293B);
@@ -232,12 +233,17 @@ class _Actions extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        final columns = box.maxWidth >= 900 ? 4 : (box.maxWidth >= 520 ? 2 : 1);
+        final columns = box.maxWidth >= 900 ? 5 : (box.maxWidth >= 520 ? 3 : 1);
+        final aspectRatio = switch (columns) {
+          5 => 2.1,
+          3 => 2.6,
+          _ => 5.0,
+        };
         return GridView.count(
           crossAxisCount: columns,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: columns == 1 ? 5 : 3.15,
+          childAspectRatio: aspectRatio,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
@@ -265,6 +271,15 @@ class _Actions extends StatelessWidget {
               color: _blue,
               borderColor: const Color(0x665B9CF6),
               onTap: onDisplayQr,
+            ),
+            _ActionTile(
+              eyebrow: 'Summary',
+              label: 'Print / Save PDF',
+              icon: Icons.print_outlined,
+              onTap: () => showDialog<void>(
+                context: context,
+                builder: (_) => MedicalSummaryDialog(profile: profile),
+              ),
             ),
             _ActionTile(
               eyebrow: 'Emergency',

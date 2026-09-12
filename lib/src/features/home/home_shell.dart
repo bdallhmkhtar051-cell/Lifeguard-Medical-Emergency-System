@@ -11,6 +11,7 @@ import '../patient_profile/patient_profile_page.dart';
 import '../patient_profile/patient_profile_repository.dart';
 import '../documents/document_repository.dart';
 import 'workspace_navigation.dart';
+import 'about_lifeguard_page.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({
@@ -86,29 +87,35 @@ class _HomeShellState extends State<HomeShell> {
           onLogout: widget.sessionController.logout,
         ),
       ),
-      body: role == UserRole.patient
-          ? PatientProfilePage(
-              repository: widget.patientProfileRepository,
-              accessRepository: widget.accessRepository,
-              clinicalRepository: widget.clinicalRepository,
-              documentRepository: widget.documentRepository,
-              navigationController: _navigation,
-            )
-          : role == UserRole.doctor
-          ? DoctorAccessPage(
-              repository: widget.accessRepository,
-              clinicalRepository: widget.clinicalRepository,
-              user: user,
-              initialMedicalQrToken: widget.initialMedicalQrToken,
-              documentRepository: widget.documentRepository,
-              navigationController: _navigation,
-            )
-          : role == UserRole.administrator
-          ? AdministrationPage(
-              repository: widget.administrationRepository,
-              currentUser: user,
-            )
-          : _RoleLanding(user: user),
+      body: ListenableBuilder(
+        listenable: _navigation,
+        builder: (context, _) =>
+            _navigation.destination == WorkspaceDestination.about
+            ? AboutLifeGuardPage(user: user)
+            : role == UserRole.patient
+            ? PatientProfilePage(
+                repository: widget.patientProfileRepository,
+                accessRepository: widget.accessRepository,
+                clinicalRepository: widget.clinicalRepository,
+                documentRepository: widget.documentRepository,
+                navigationController: _navigation,
+              )
+            : role == UserRole.doctor
+            ? DoctorAccessPage(
+                repository: widget.accessRepository,
+                clinicalRepository: widget.clinicalRepository,
+                user: user,
+                initialMedicalQrToken: widget.initialMedicalQrToken,
+                documentRepository: widget.documentRepository,
+                navigationController: _navigation,
+              )
+            : role == UserRole.administrator
+            ? AdministrationPage(
+                repository: widget.administrationRepository,
+                currentUser: user,
+              )
+            : _RoleLanding(user: user),
+      ),
     );
   }
 
@@ -211,6 +218,24 @@ class _WorkspaceDrawer extends StatelessWidget {
                           Navigator.pop(context);
                         },
                       ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Divider(color: Color(0xFF334155), height: 1),
+                    ),
+                    _DrawerDestinationTile(
+                      item: const _DrawerItem(
+                        WorkspaceDestination.about,
+                        'About LifeGuard',
+                        Icons.info_outline,
+                      ),
+                      selected:
+                          navigation.destination == WorkspaceDestination.about,
+                      accent: accent,
+                      onTap: () {
+                        navigation.select(WorkspaceDestination.about);
+                        Navigator.pop(context);
+                      },
                     ),
                   ],
                 ),

@@ -223,6 +223,37 @@ void main() {
     expect(find.byKey(const ValueKey('drawer-patientOverview')), findsNothing);
   });
 
+  testWidgets('patient can open the stored emergency summary', (tester) async {
+    final harness = await _Harness.create(authenticate: true);
+    await tester.pumpWidget(harness.app);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Print / Save PDF'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('medical-summary-sheet')), findsOneWidget);
+    expect(find.text(sampleProfile.fullName), findsWidgets);
+    expect(find.text('ALLERGIES'), findsOneWidget);
+    expect(find.textContaining('Patient-reported information'), findsOneWidget);
+  });
+
+  testWidgets('all authenticated roles can open About LifeGuard', (
+    tester,
+  ) async {
+    final harness = await _Harness.create(authenticate: true);
+    await tester.pumpWidget(harness.app);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('drawer-about')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('about-lifeguard-page')), findsOneWidget);
+    expect(find.text('Current system architecture'), findsOneWidget);
+    expect(find.textContaining('biometric', findRichText: true), findsWidgets);
+  });
+
   testWidgets('administrator can review users and deactivate an account', (
     tester,
   ) async {

@@ -8,6 +8,7 @@ enum WorkspaceDestination {
   doctorPatients,
   doctorScanQr,
   administration,
+  about,
 }
 
 /// Shares the selected drawer destination with the active role page.
