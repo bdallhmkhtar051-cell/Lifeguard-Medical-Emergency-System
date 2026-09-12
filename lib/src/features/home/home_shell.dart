@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../auth/auth_models.dart';
 import '../auth/session_controller.dart';
 import '../administration/administration_page.dart';
@@ -12,6 +13,7 @@ import '../patient_profile/patient_profile_repository.dart';
 import '../documents/document_repository.dart';
 import 'workspace_navigation.dart';
 import 'about_lifeguard_page.dart';
+import 'accessibility_settings_page.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({
@@ -39,6 +41,9 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   late final WorkspaceNavigationController _navigation;
+  double _textScale = 1;
+  bool _highContrast = false;
+  bool _reducedMotion = false;
 
   @override
   void initState() {
@@ -62,59 +67,88 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final user = widget.sessionController.user!;
     final role = user.singleRole;
-    return Scaffold(
-      drawer: _WorkspaceDrawer(
-        user: user,
-        navigation: _navigation,
-        busy: widget.sessionController.isBusy,
-        onLogout: widget.sessionController.logout,
-      ),
-      appBar: AppBar(
-        toolbarHeight: 74,
-        titleSpacing: 0,
-        leading: Builder(
-          builder: (context) => IconButton(
-            key: const ValueKey('workspace-menu-button'),
-            tooltip: 'Open navigation menu',
-            onPressed: Scaffold.of(context).openDrawer,
-            icon: const Icon(Icons.menu),
+    final media = MediaQuery.of(context).copyWith(
+      textScaler: TextScaler.linear(_textScale),
+      disableAnimations: _reducedMotion,
+    );
+    return Theme(
+      data: _highContrast ? AppTheme.highContrast() : AppTheme.light(),
+      child: MediaQuery(
+        data: media,
+        child: Scaffold(
+          drawer: _WorkspaceDrawer(
+            user: user,
+            navigation: _navigation,
+            busy: widget.sessionController.isBusy,
+            onLogout: widget.sessionController.logout,
+          ),
+          appBar: AppBar(
+            toolbarHeight: 74,
+            titleSpacing: 0,
+            leading: Builder(
+              builder: (context) => IconButton(
+                key: const ValueKey('workspace-menu-button'),
+                tooltip: 'Open navigation menu',
+                onPressed: Scaffold.of(context).openDrawer,
+                icon: const Icon(Icons.menu),
+              ),
+            ),
+            title: _PortalNavigation(
+              user: user,
+              role: role,
+              busy: widget.sessionController.isBusy,
+              onLogout: widget.sessionController.logout,
+            ),
+          ),
+          body: ListenableBuilder(
+            listenable: _navigation,
+            builder: (context, _) => switch (_navigation.destination) {
+              WorkspaceDestination.about => AboutLifeGuardPage(user: user),
+              WorkspaceDestination.settings => AccessibilitySettingsPage(
+                user: user,
+                expiresAtUtc: widget.sessionController.expiresAtUtc,
+                textScale: _textScale,
+                highContrast: _highContrast,
+                reducedMotion: _reducedMotion,
+                onTextScaleChanged: (value) =>
+                    setState(() => _textScale = value),
+                onHighContrastChanged: (value) =>
+                    setState(() => _highContrast = value),
+                onReducedMotionChanged: (value) =>
+                    setState(() => _reducedMotion = value),
+                onReset: () => setState(() {
+                  _textScale = 1;
+                  _highContrast = false;
+                  _reducedMotion = false;
+                }),
+              ),
+              _ =>
+                role == UserRole.patient
+                    ? PatientProfilePage(
+                        repository: widget.patientProfileRepository,
+                        accessRepository: widget.accessRepository,
+                        clinicalRepository: widget.clinicalRepository,
+                        documentRepository: widget.documentRepository,
+                        navigationController: _navigation,
+                      )
+                    : role == UserRole.doctor
+                    ? DoctorAccessPage(
+                        repository: widget.accessRepository,
+                        clinicalRepository: widget.clinicalRepository,
+                        user: user,
+                        initialMedicalQrToken: widget.initialMedicalQrToken,
+                        documentRepository: widget.documentRepository,
+                        navigationController: _navigation,
+                      )
+                    : role == UserRole.administrator
+                    ? AdministrationPage(
+                        repository: widget.administrationRepository,
+                        currentUser: user,
+                      )
+                    : _RoleLanding(user: user),
+            },
           ),
         ),
-        title: _PortalNavigation(
-          user: user,
-          role: role,
-          busy: widget.sessionController.isBusy,
-          onLogout: widget.sessionController.logout,
-        ),
-      ),
-      body: ListenableBuilder(
-        listenable: _navigation,
-        builder: (context, _) =>
-            _navigation.destination == WorkspaceDestination.about
-            ? AboutLifeGuardPage(user: user)
-            : role == UserRole.patient
-            ? PatientProfilePage(
-                repository: widget.patientProfileRepository,
-                accessRepository: widget.accessRepository,
-                clinicalRepository: widget.clinicalRepository,
-                documentRepository: widget.documentRepository,
-                navigationController: _navigation,
-              )
-            : role == UserRole.doctor
-            ? DoctorAccessPage(
-                repository: widget.accessRepository,
-                clinicalRepository: widget.clinicalRepository,
-                user: user,
-                initialMedicalQrToken: widget.initialMedicalQrToken,
-                documentRepository: widget.documentRepository,
-                navigationController: _navigation,
-              )
-            : role == UserRole.administrator
-            ? AdministrationPage(
-                repository: widget.administrationRepository,
-                currentUser: user,
-              )
-            : _RoleLanding(user: user),
       ),
     );
   }
@@ -234,6 +268,21 @@ class _WorkspaceDrawer extends StatelessWidget {
                       accent: accent,
                       onTap: () {
                         navigation.select(WorkspaceDestination.about);
+                        Navigator.pop(context);
+                      },
+                    ),
+                    _DrawerDestinationTile(
+                      item: const _DrawerItem(
+                        WorkspaceDestination.settings,
+                        'Accessibility & settings',
+                        Icons.settings_accessibility_outlined,
+                      ),
+                      selected:
+                          navigation.destination ==
+                          WorkspaceDestination.settings,
+                      accent: accent,
+                      onTap: () {
+                        navigation.select(WorkspaceDestination.settings);
                         Navigator.pop(context);
                       },
                     ),
@@ -478,8 +527,10 @@ class _PortalNavigation extends StatelessWidget {
                   ],
                 ),
               ),
-              _RolePill(role: role, accent: accent),
-              const SizedBox(width: 10),
+              if (MediaQuery.sizeOf(context).width >= 520) ...[
+                _RolePill(role: role, accent: accent),
+                const SizedBox(width: 10),
+              ],
               if (MediaQuery.sizeOf(context).width >= 760) ...[
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,

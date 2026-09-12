@@ -254,6 +254,52 @@ void main() {
     expect(find.textContaining('biometric', findRichText: true), findsWidgets);
   });
 
+  testWidgets('accessibility preferences apply and reset in the workspace', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final harness = await _Harness.create(authenticate: true);
+    await tester.pumpWidget(harness.app);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('drawer-settings')));
+    await tester.pumpAndSettle();
+
+    final page = find.byKey(const ValueKey('accessibility-settings-page'));
+    expect(page, findsOneWidget);
+    expect(find.text(sampleProfile.fullName), findsOneWidget);
+    expect(find.text('Patient'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('settings-high-contrast')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'high contrast layout');
+    await tester.tap(find.byKey(const ValueKey('settings-reduced-motion')));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'reduced motion layout');
+    await tester.drag(
+      find.byKey(const ValueKey('settings-text-scale')),
+      const Offset(250, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'large text layout');
+
+    final pageContext = tester.element(page);
+    expect(MediaQuery.of(pageContext).disableAnimations, isTrue);
+    expect(MediaQuery.textScalerOf(pageContext).scale(10), 13);
+    expect(Theme.of(pageContext).dividerTheme.thickness, 2);
+
+    await tester.ensureVisible(find.byKey(const ValueKey('settings-reset')));
+    await tester.tap(find.byKey(const ValueKey('settings-reset')));
+    await tester.pumpAndSettle();
+    expect(MediaQuery.of(tester.element(page)).disableAnimations, isFalse);
+    expect(MediaQuery.textScalerOf(tester.element(page)).scale(10), 10);
+    expect(tester.takeException(), isNull, reason: 'reset layout');
+  });
+
   testWidgets('administrator can review users and deactivate an account', (
     tester,
   ) async {

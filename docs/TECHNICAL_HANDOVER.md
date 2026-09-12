@@ -10,7 +10,7 @@
 
 **Base commit:** `80011f1` (`feat: add role-aware workspace navigation`)
 
-**Working milestone:** checkpoint 14 presentation utilities
+**Working milestone:** checkpoint 15 accessibility and settings
 **Primary local root:** `C:\Users\hp\Documents\flutter projects\my flutter projects\Emergency system\emergency_system`
 
 This document is the source-of-truth handover for continuing development in a
@@ -884,10 +884,10 @@ and other small confirmations/feedback.
 
 ### Last completed full verification
 
-The checkpoint 14 verification completed on 12 September 2026 reported:
+The checkpoint 15 verification completed on 12 September 2026 reported:
 
 - Flutter analyzer: no issues;
-- Flutter tests: **43 passed**;
+- Flutter tests: **44 passed**;
 - backend Application tests: **6 passed**;
 - backend API integration tests: **23 passed**;
 - ASP.NET solution build: zero warnings and zero errors;
@@ -933,6 +933,8 @@ Feature tests:
 - doctor patient-directory search, authorization filters, result counts, and
   narrow-layout overflow protection.
 - authenticated About LifeGuard navigation and stored emergency-summary view.
+- 390-pixel accessibility settings at 130% text, high contrast, reduced motion,
+  actual session details, and preference reset.
 
 There is no golden/screenshot test, end-to-end browser automation suite, or
 coverage threshold.
@@ -1056,12 +1058,10 @@ Preserve these unless the user explicitly requests a redesign:
 
 ### Pending feature milestones
 
-1. **Accessibility/settings:** text-size, high contrast, reduced motion, session
-   information, keyboard and screen-reader verification.
-2. **Optional access request:** doctor request -> patient approve/reject ->
+1. **Optional access request:** doctor request -> patient approve/reject ->
    expiry/purpose/status/audit. Existing direct patient grant already meets the
    essential consent use case.
-3. **Final verification/evidence:** manual workflows, screenshots, security
+2. **Final verification/evidence:** manual workflows, screenshots, security
    cases, deployment configuration, and thesis handover/test tables.
 
 ## 14. Next Steps in Priority Order
@@ -1069,11 +1069,10 @@ Preserve these unless the user explicitly requests a redesign:
 1. Manually inspect the drawer and role isolation in Chrome using patient,
    doctor, and administrator demo accounts.
 2. Complete the phone-to-laptop physical QR scan and camera-permission checks.
-3. Add accessibility/settings after core content is stable.
-4. Add doctor access requests only if thesis time remains.
-5. Perform final security, browser, responsive, SQL Server, deployment, and
+3. Add doctor access requests only if thesis time remains.
+4. Perform final security, browser, responsive, SQL Server, deployment, and
    thesis-evidence verification.
-6. Update this handover, `README.md`, checkpoint docs, and Chapter 4-6 evidence
+5. Update this handover, `README.md`, checkpoint docs, and Chapter 4-6 evidence
     after each genuinely completed milestone.
 
 ## 15. Important Files to Read First
@@ -1148,6 +1147,8 @@ route, DTO key, test fake, and endpoint.
 - Checkpoint 14 added a role-neutral About LifeGuard presentation page and a
   patient-only printable summary of the already loaded SQL-backed profile. The
   summary explicitly labels its information as patient reported.
+- Checkpoint 15 added session-scoped text size, high contrast, reduced motion,
+  reset controls, and actual user/token-expiry information for every role.
 - The correct latest commit is `80011f1`; do not use the earlier mistyped
   `800codes1` identifier.
 
@@ -1156,12 +1157,12 @@ route, DTO key, test fake, and endpoint.
 - Remote: `https://github.com/bdallhmkhtar051-cell/Lifeguard-Medical-Emergency-System.git`
 - Repository is private according to the project setup history; verify access
   in GitHub rather than assuming from the remote URL alone.
-- Checkpoint 14 follows base commit `3111550`; use `git log -1 --oneline` for
+- Checkpoint 15 follows base commit `9f1ec24`; use `git log -1 --oneline` for
   the exact checkpoint commit identifier.
 - Locally generated thesis PDF/output artifacts were untracked:
   `LifeGuard_Thesis_Handover.pdf` and `output/`. Do not commit them unless the
   user explicitly decides to version generated evidence.
-- This Markdown handover is intended to be versioned with checkpoint 14.
+- This Markdown handover is intended to be versioned with checkpoint 15.
 
 Recent history before this file:
 

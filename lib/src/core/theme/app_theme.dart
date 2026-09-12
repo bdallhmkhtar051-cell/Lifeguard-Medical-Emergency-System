@@ -68,4 +68,28 @@ class AppTheme {
       dividerTheme: const DividerThemeData(color: border, thickness: 1),
     );
   }
+
+  /// Stronger boundaries and focus indicators for the authenticated
+  /// workspace. This remains a light theme to preserve clinical color meaning.
+  static ThemeData highContrast() {
+    final base = light();
+    return base.copyWith(
+      scaffoldBackgroundColor: Colors.white,
+      colorScheme: base.colorScheme.copyWith(
+        primary: const Color(0xFF0039A6),
+        secondary: const Color(0xFF006B5B),
+        outline: Colors.black,
+        outlineVariant: const Color(0xFF475569),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Colors.black, width: 2),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(color: Colors.black, thickness: 2),
+    );
+  }
 }
