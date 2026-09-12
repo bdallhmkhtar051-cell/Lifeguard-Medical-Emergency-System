@@ -59,6 +59,23 @@ public sealed class EmergencyProfileValidatorTests
         Assert.Contains("emergencyContacts[0].phoneNumber", errors.Keys);
     }
 
+    [Fact]
+    public void Validate_rejects_invalid_emergency_coordination_details()
+    {
+        var request = ValidRequest() with
+        {
+            PrimaryPhysicianPhone = "0612345678",
+            FirstResponderNotes = new string('x', 1001),
+            OrganDonorStatus = (OrganDonorStatus)999,
+        };
+
+        var errors = EmergencyProfileValidator.Validate(request, Today);
+
+        Assert.Contains("primaryPhysicianPhone", errors.Keys);
+        Assert.Contains("firstResponderNotes", errors.Keys);
+        Assert.Contains("organDonorStatus", errors.Keys);
+    }
+
     private static UpdateEmergencyProfileRequest ValidRequest() =>
         new()
         {

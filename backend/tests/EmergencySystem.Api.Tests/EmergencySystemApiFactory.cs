@@ -116,6 +116,12 @@ internal sealed class EmergencySystemApiFactory : WebApplicationFactory<Program>
             FullName = "Test Patient",
             DateOfBirth = new DateOnly(1997, 4, 12),
             BloodGroup = BloodGroup.OPositive,
+            PrimaryPhysicianName = "Dr. Test Physician",
+            PrimaryPhysicianPhone = "+252612345670",
+            InsuranceProvider = "Test Health Cover",
+            InsurancePolicyNumber = "TEST-COVER-001",
+            OrganDonorStatus = OrganDonorStatus.Donor,
+            FirstResponderNotes = "Test patient carries a prescribed rescue inhaler.",
             UpdatedAtUtc = DateTimeOffset.UtcNow,
             Version = Guid.NewGuid(),
             Allergies =

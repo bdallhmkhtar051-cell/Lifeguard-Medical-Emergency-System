@@ -16,6 +16,18 @@ public sealed class PatientProfile
 
     public BloodGroup BloodGroup { get; set; }
 
+    public string? PrimaryPhysicianName { get; set; }
+
+    public string? PrimaryPhysicianPhone { get; set; }
+
+    public string? InsuranceProvider { get; set; }
+
+    public string? InsurancePolicyNumber { get; set; }
+
+    public OrganDonorStatus OrganDonorStatus { get; set; }
+
+    public string? FirstResponderNotes { get; set; }
+
     public DateTimeOffset UpdatedAtUtc { get; set; }
 
     /// <summary>

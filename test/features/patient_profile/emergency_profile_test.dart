@@ -8,6 +8,12 @@ void main() {
       'fullName': 'Amina Yusuf',
       'dateOfBirth': '1997-04-12',
       'bloodGroup': 'OPositive',
+      'primaryPhysicianName': 'Dr. Fadumo Abdi',
+      'primaryPhysicianPhone': '+252612345670',
+      'insuranceProvider': 'LifeGuard Demo Health',
+      'insurancePolicyNumber': 'DEMO-2026-001',
+      'organDonorStatus': 'Donor',
+      'firstResponderNotes': 'Carries a prescribed rescue inhaler.',
       'allergies': [
         {
           'id': 'allergy-id',
@@ -42,6 +48,9 @@ void main() {
     expect(profile.id, 'profile-id');
     expect(profile.allergies.single.reaction, 'Anaphylaxis');
     expect(profile.emergencyContacts.single.isPrimary, isTrue);
+    expect(profile.primaryPhysicianName, 'Dr. Fadumo Abdi');
+    expect(profile.organDonorStatus, 'Donor');
+    expect(profile.firstResponderNotes, contains('rescue inhaler'));
     expect(profile.updatedAtUtc?.isUtc, isTrue);
   });
 
@@ -64,6 +73,8 @@ void main() {
     expect(update, isNot(contains('id')));
     expect(update['fullName'], 'Amina Yusuf');
     expect(update['dateOfBirth'], '1997-04-12');
+    expect(update['organDonorStatus'], 'Unknown');
+    expect(update['primaryPhysicianName'], isNull);
     expect(update['allergies'], [
       {'name': 'Penicillin', 'severity': 'Unknown', 'reaction': ''},
     ]);
@@ -79,5 +90,7 @@ void main() {
     expect(profile.medicalConditions, isEmpty);
     expect(profile.medications, isEmpty);
     expect(profile.emergencyContacts, isEmpty);
+    expect(profile.organDonorStatus, 'Unknown');
+    expect(profile.firstResponderNotes, isEmpty);
   });
 }

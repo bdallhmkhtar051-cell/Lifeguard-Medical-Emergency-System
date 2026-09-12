@@ -35,6 +35,12 @@ class _PatientProfileFormState extends State<PatientProfileForm> {
   late List<_ConditionDraft> _conditions;
   late List<_MedicationDraft> _medications;
   late List<_ContactDraft> _contacts;
+  late final TextEditingController _physicianName;
+  late final TextEditingController _physicianPhone;
+  late final TextEditingController _insuranceProvider;
+  late final TextEditingController _insurancePolicyNumber;
+  late final TextEditingController _firstResponderNotes;
+  late String _organDonorStatus;
   bool _dirty = false;
   String? _localError;
 
@@ -52,6 +58,22 @@ class _PatientProfileFormState extends State<PatientProfileForm> {
     _contacts = widget.profile.emergencyContacts
         .map(_ContactDraft.fromModel)
         .toList();
+    _physicianName = TextEditingController(
+      text: widget.profile.primaryPhysicianName,
+    );
+    _physicianPhone = TextEditingController(
+      text: widget.profile.primaryPhysicianPhone,
+    );
+    _insuranceProvider = TextEditingController(
+      text: widget.profile.insuranceProvider,
+    );
+    _insurancePolicyNumber = TextEditingController(
+      text: widget.profile.insurancePolicyNumber,
+    );
+    _firstResponderNotes = TextEditingController(
+      text: widget.profile.firstResponderNotes,
+    );
+    _organDonorStatus = widget.profile.organDonorStatus;
   }
 
   @override
@@ -60,6 +82,11 @@ class _PatientProfileFormState extends State<PatientProfileForm> {
     _disposeAll(_conditions);
     _disposeAll(_medications);
     _disposeAll(_contacts);
+    _physicianName.dispose();
+    _physicianPhone.dispose();
+    _insuranceProvider.dispose();
+    _insurancePolicyNumber.dispose();
+    _firstResponderNotes.dispose();
     super.dispose();
   }
 
@@ -126,6 +153,12 @@ class _PatientProfileFormState extends State<PatientProfileForm> {
     _localError = null;
     final profile = widget.profile.copyWith(
       bloodGroup: _bloodGroup,
+      primaryPhysicianName: _physicianName.text,
+      primaryPhysicianPhone: _physicianPhone.text,
+      insuranceProvider: _insuranceProvider.text,
+      insurancePolicyNumber: _insurancePolicyNumber.text,
+      organDonorStatus: _organDonorStatus,
+      firstResponderNotes: _firstResponderNotes.text,
       allergies: _allergies.map((item) => item.toModel()).toList(),
       medicalConditions: _conditions.map((item) => item.toModel()).toList(),
       medications: _medications.map((item) => item.toModel()).toList(),
@@ -242,6 +275,105 @@ class _PatientProfileFormState extends State<PatientProfileForm> {
             ),
           ),
           const SizedBox(height: 16),
+          _FormSection(
+            title: 'Emergency coordination',
+            description:
+                'Optional patient-reported details. Confirm them with official sources when possible.',
+            child: Column(
+              children: [
+                _ResponsiveFields(
+                  children: [
+                    _ProfileTextField(
+                      controller: _physicianName,
+                      label: 'Primary physician name',
+                      enabled: !widget.saving,
+                      onChanged: _markDirty,
+                    ),
+                    _ProfileTextField(
+                      controller: _physicianPhone,
+                      label: 'Primary physician phone',
+                      enabled: !widget.saving,
+                      keyboardType: TextInputType.phone,
+                      maxLength: 16,
+                      onChanged: _markDirty,
+                      validator: _optionalInternationalPhone,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _ResponsiveFields(
+                  children: [
+                    _ProfileTextField(
+                      controller: _insuranceProvider,
+                      label: 'Insurance provider',
+                      enabled: !widget.saving,
+                      onChanged: _markDirty,
+                    ),
+                    _ProfileTextField(
+                      controller: _insurancePolicyNumber,
+                      label: 'Policy or member number',
+                      enabled: !widget.saving,
+                      onChanged: _markDirty,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  key: const ValueKey('organ-donor-status-field'),
+                  initialValue: organDonorStatusLabels.containsKey(
+                    _organDonorStatus,
+                  )
+                      ? _organDonorStatus
+                      : 'Unknown',
+                  decoration: const InputDecoration(
+                    labelText: 'Organ donor status',
+                    prefixIcon: Icon(Icons.volunteer_activism_outlined),
+                  ),
+                  items: organDonorStatusLabels.entries
+                      .map(
+                        (entry) => DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: widget.saving
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _organDonorStatus = value ?? 'Unknown';
+                            _dirty = true;
+                          });
+                        },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: const ValueKey('first-responder-notes-field'),
+                  controller: _firstResponderNotes,
+                  enabled: !widget.saving,
+                  minLines: 3,
+                  maxLines: 5,
+                  maxLength: 1000,
+                  decoration: const InputDecoration(
+                    labelText: 'First-responder notes',
+                    hintText:
+                        'Short factual instructions or context; do not enter a diagnosis.',
+                    alignLabelWithHint: true,
+                  ),
+                  onChanged: _markDirty,
+                ),
+                const SizedBox(height: 4),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Donor status and notes are informational and do not replace official records or clinical judgment.',
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           _EditableListSection(
             title: 'Allergies',
             description: 'Record the allergen and any known reaction.',
@@ -342,6 +474,14 @@ class _PatientProfileFormState extends State<PatientProfileForm> {
       ),
     );
   }
+}
+
+String? _optionalInternationalPhone(String? value) {
+  final text = value?.trim() ?? '';
+  if (text.isEmpty) return null;
+  return RegExp(r'^\+[1-9]\d{6,14}$').hasMatch(text)
+      ? null
+      : 'Use international format, for example +252612345678.';
 }
 
 class _FormSection extends StatelessWidget {

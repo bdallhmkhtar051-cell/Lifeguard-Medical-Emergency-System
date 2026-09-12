@@ -17,6 +17,14 @@ internal sealed class PatientProfileConfiguration
         builder.Property(profile => profile.BloodGroup)
             .HasConversion<string>()
             .HasMaxLength(20);
+        builder.Property(profile => profile.PrimaryPhysicianName).HasMaxLength(100);
+        builder.Property(profile => profile.PrimaryPhysicianPhone).HasMaxLength(16);
+        builder.Property(profile => profile.InsuranceProvider).HasMaxLength(100);
+        builder.Property(profile => profile.InsurancePolicyNumber).HasMaxLength(100);
+        builder.Property(profile => profile.OrganDonorStatus)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+        builder.Property(profile => profile.FirstResponderNotes).HasMaxLength(1000);
         builder.Property(profile => profile.UpdatedAtUtc).HasPrecision(0);
         builder.Property(profile => profile.Version).IsConcurrencyToken();
         builder.HasIndex(profile => profile.UserId).IsUnique();

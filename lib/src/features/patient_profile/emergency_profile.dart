@@ -112,6 +112,12 @@ class EmergencyProfile {
     required this.fullName,
     this.dateOfBirth,
     this.bloodGroup = '',
+    this.primaryPhysicianName = '',
+    this.primaryPhysicianPhone = '',
+    this.insuranceProvider = '',
+    this.insurancePolicyNumber = '',
+    this.organDonorStatus = 'Unknown',
+    this.firstResponderNotes = '',
     this.allergies = const <Allergy>[],
     this.medicalConditions = const <MedicalCondition>[],
     this.medications = const <Medication>[],
@@ -125,6 +131,14 @@ class EmergencyProfile {
       fullName: _requiredText(json, 'fullName'),
       dateOfBirth: _optionalDate(json['dateOfBirth']),
       bloodGroup: _optionalText(json['bloodGroup']),
+      primaryPhysicianName: _optionalText(json['primaryPhysicianName']),
+      primaryPhysicianPhone: _optionalText(json['primaryPhysicianPhone']),
+      insuranceProvider: _optionalText(json['insuranceProvider']),
+      insurancePolicyNumber: _optionalText(json['insurancePolicyNumber']),
+      organDonorStatus: _optionalText(json['organDonorStatus']).isEmpty
+          ? 'Unknown'
+          : _optionalText(json['organDonorStatus']),
+      firstResponderNotes: _optionalText(json['firstResponderNotes']),
       allergies: _objects(json['allergies'], Allergy.fromJson),
       medicalConditions: _objects(
         json['medicalConditions'],
@@ -143,6 +157,12 @@ class EmergencyProfile {
   final String fullName;
   final DateTime? dateOfBirth;
   final String bloodGroup;
+  final String primaryPhysicianName;
+  final String primaryPhysicianPhone;
+  final String insuranceProvider;
+  final String insurancePolicyNumber;
+  final String organDonorStatus;
+  final String firstResponderNotes;
   final List<Allergy> allergies;
   final List<MedicalCondition> medicalConditions;
   final List<Medication> medications;
@@ -151,6 +171,12 @@ class EmergencyProfile {
 
   EmergencyProfile copyWith({
     String? bloodGroup,
+    String? primaryPhysicianName,
+    String? primaryPhysicianPhone,
+    String? insuranceProvider,
+    String? insurancePolicyNumber,
+    String? organDonorStatus,
+    String? firstResponderNotes,
     List<Allergy>? allergies,
     List<MedicalCondition>? medicalConditions,
     List<Medication>? medications,
@@ -161,6 +187,15 @@ class EmergencyProfile {
       fullName: fullName,
       dateOfBirth: dateOfBirth,
       bloodGroup: bloodGroup ?? this.bloodGroup,
+      primaryPhysicianName:
+          primaryPhysicianName ?? this.primaryPhysicianName,
+      primaryPhysicianPhone:
+          primaryPhysicianPhone ?? this.primaryPhysicianPhone,
+      insuranceProvider: insuranceProvider ?? this.insuranceProvider,
+      insurancePolicyNumber:
+          insurancePolicyNumber ?? this.insurancePolicyNumber,
+      organDonorStatus: organDonorStatus ?? this.organDonorStatus,
+      firstResponderNotes: firstResponderNotes ?? this.firstResponderNotes,
       allergies: allergies ?? this.allergies,
       medicalConditions: medicalConditions ?? this.medicalConditions,
       medications: medications ?? this.medications,
@@ -176,6 +211,12 @@ class EmergencyProfile {
     'fullName': fullName.trim(),
     'dateOfBirth': dateOfBirth == null ? null : _dateOnly(dateOfBirth!),
     'bloodGroup': bloodGroup.trim(),
+    'primaryPhysicianName': _nullableText(primaryPhysicianName),
+    'primaryPhysicianPhone': _nullableText(primaryPhysicianPhone),
+    'insuranceProvider': _nullableText(insuranceProvider),
+    'insurancePolicyNumber': _nullableText(insurancePolicyNumber),
+    'organDonorStatus': organDonorStatus,
+    'firstResponderNotes': _nullableText(firstResponderNotes),
     'allergies': allergies.map((item) => item.toUpdateJson()).toList(),
     'medicalConditions': medicalConditions
         .map((item) => item.toUpdateJson())
@@ -199,6 +240,12 @@ const bloodGroupLabels = <String, String>{
   'ONegative': 'O-',
 };
 
+const organDonorStatusLabels = <String, String>{
+  'Unknown': 'Not specified',
+  'Donor': 'Registered donor (patient reported)',
+  'NotDonor': 'Not a donor (patient reported)',
+};
+
 String bloodGroupLabel(String apiValue) =>
     bloodGroupLabels[apiValue] ?? apiValue;
 
@@ -220,6 +267,11 @@ String _requiredText(Map<String, dynamic> json, String key) {
 
 String _optionalText(Object? value) =>
     value is String ? value.trim() : value?.toString().trim() ?? '';
+
+String? _nullableText(String value) {
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
 
 DateTime? _optionalDate(Object? value) {
   if (value == null || value == '') {

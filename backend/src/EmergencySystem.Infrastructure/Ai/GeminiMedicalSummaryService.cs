@@ -126,6 +126,10 @@ internal sealed class GeminiMedicalSummaryService(
             .AppendLine($"Patient: {profile.FullName}")
             .AppendLine($"Date of birth: {profile.DateOfBirth:yyyy-MM-dd}")
             .AppendLine($"Blood group: {profile.BloodGroup}")
+            .AppendLine($"Primary physician: {profile.PrimaryPhysicianName}, {profile.PrimaryPhysicianPhone}")
+            .AppendLine($"Insurance: {profile.InsuranceProvider}, policy {profile.InsurancePolicyNumber}")
+            .AppendLine($"Patient-reported donor status: {profile.OrganDonorStatus}")
+            .AppendLine($"First responder notes: {profile.FirstResponderNotes}")
             .AppendLine("Allergies: " + string.Join("; ", profile.Allergies.Select(
                 item => $"{item.Name} ({item.Severity}, {item.Reaction})")))
             .AppendLine("Conditions: " + string.Join("; ", profile.MedicalConditions.Select(

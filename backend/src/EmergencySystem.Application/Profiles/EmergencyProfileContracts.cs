@@ -10,6 +10,18 @@ public sealed record UpdateEmergencyProfileRequest
 
     public BloodGroup? BloodGroup { get; init; }
 
+    public string? PrimaryPhysicianName { get; init; }
+
+    public string? PrimaryPhysicianPhone { get; init; }
+
+    public string? InsuranceProvider { get; init; }
+
+    public string? InsurancePolicyNumber { get; init; }
+
+    public OrganDonorStatus OrganDonorStatus { get; init; } = OrganDonorStatus.Unknown;
+
+    public string? FirstResponderNotes { get; init; }
+
     public IReadOnlyList<AllergyInput>? Allergies { get; init; }
 
     public IReadOnlyList<MedicalConditionInput>? MedicalConditions { get; init; }
@@ -84,6 +96,12 @@ public sealed record EmergencyProfileResponse(
     string FullName,
     DateOnly DateOfBirth,
     BloodGroup BloodGroup,
+    string? PrimaryPhysicianName,
+    string? PrimaryPhysicianPhone,
+    string? InsuranceProvider,
+    string? InsurancePolicyNumber,
+    OrganDonorStatus OrganDonorStatus,
+    string? FirstResponderNotes,
     IReadOnlyList<AllergyResponse> Allergies,
     IReadOnlyList<MedicalConditionResponse> MedicalConditions,
     IReadOnlyList<MedicationResponse> Medications,

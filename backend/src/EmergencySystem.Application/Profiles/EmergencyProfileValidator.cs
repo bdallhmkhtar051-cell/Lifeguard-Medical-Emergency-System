@@ -35,6 +35,24 @@ public static class EmergencyProfileValidator
             Add(errors, "bloodGroup", "A valid blood group is required.");
         }
 
+        ValidateOptionalText(errors, "primaryPhysicianName", request.PrimaryPhysicianName, 100);
+        ValidateOptionalPhoneNumber(
+            errors,
+            "primaryPhysicianPhone",
+            request.PrimaryPhysicianPhone);
+        ValidateOptionalText(errors, "insuranceProvider", request.InsuranceProvider, 100);
+        ValidateOptionalText(
+            errors,
+            "insurancePolicyNumber",
+            request.InsurancePolicyNumber,
+            100);
+        ValidateOptionalText(errors, "firstResponderNotes", request.FirstResponderNotes, 1000);
+
+        if (!Enum.IsDefined(request.OrganDonorStatus))
+        {
+            Add(errors, "organDonorStatus", "A valid organ donor status is required.");
+        }
+
         ValidateAllergies(errors, request.Allergies);
         ValidateMedicalConditions(errors, request.MedicalConditions);
         ValidateMedications(errors, request.Medications);
@@ -198,6 +216,26 @@ public static class EmergencyProfileValidator
 
         if (!Regex.IsMatch(
                 value,
+                @"^\+[1-9]\d{6,14}$",
+                RegexOptions.CultureInvariant,
+                TimeSpan.FromMilliseconds(100)))
+        {
+            Add(errors, key, "Use international format, for example +252612345678.");
+        }
+    }
+
+    private static void ValidateOptionalPhoneNumber(
+        Dictionary<string, List<string>> errors,
+        string key,
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        if (!Regex.IsMatch(
+                value.Trim(),
                 @"^\+[1-9]\d{6,14}$",
                 RegexOptions.CultureInvariant,
                 TimeSpan.FromMilliseconds(100)))

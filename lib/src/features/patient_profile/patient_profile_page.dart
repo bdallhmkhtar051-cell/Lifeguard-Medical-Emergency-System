@@ -395,6 +395,59 @@ class _OverviewGrid extends StatelessWidget {
             )
             .toList(),
       ),
+      _RecordCard(
+        title: 'Care and coverage',
+        icon: Icons.health_and_safety_outlined,
+        accent: const Color(0xFF0F766E),
+        emptyText: 'No physician or insurance details recorded.',
+        children: [
+          if (profile.primaryPhysicianName.isNotEmpty ||
+              profile.primaryPhysicianPhone.isNotEmpty)
+            _RecordRow(
+              title: profile.primaryPhysicianName.isEmpty
+                  ? 'Primary physician'
+                  : profile.primaryPhysicianName,
+              subtitle: profile.primaryPhysicianPhone,
+              badge: 'PHYSICIAN',
+              badgeColor: const Color(0xFF0F766E),
+            ),
+          if (profile.insuranceProvider.isNotEmpty ||
+              profile.insurancePolicyNumber.isNotEmpty)
+            _RecordRow(
+              title: profile.insuranceProvider.isEmpty
+                  ? 'Insurance'
+                  : profile.insuranceProvider,
+              subtitle: profile.insurancePolicyNumber.isEmpty
+                  ? ''
+                  : 'Member: ${profile.insurancePolicyNumber}',
+              badge: 'COVERAGE',
+              badgeColor: const Color(0xFF0F766E),
+            ),
+        ],
+      ),
+      _RecordCard(
+        title: 'First-responder information',
+        icon: Icons.emergency_outlined,
+        accent: const Color(0xFFB45309),
+        emptyText: 'No first-responder notes recorded.',
+        children: [
+          _RecordRow(
+            title: 'Organ donor status',
+            subtitle:
+                organDonorStatusLabels[profile.organDonorStatus] ??
+                profile.organDonorStatus,
+            badge: 'PATIENT REPORTED',
+            badgeColor: const Color(0xFFB45309),
+          ),
+          if (profile.firstResponderNotes.isNotEmpty)
+            _RecordRow(
+              title: 'Responder notes',
+              subtitle: profile.firstResponderNotes,
+              badge: 'VERIFY',
+              badgeColor: const Color(0xFFB45309),
+            ),
+        ],
+      ),
     ];
 
     return LayoutBuilder(

@@ -12,6 +12,12 @@ internal static class EmergencyProfileMapper
                 profile.FullName,
                 profile.DateOfBirth,
                 profile.BloodGroup,
+                profile.PrimaryPhysicianName,
+                profile.PrimaryPhysicianPhone,
+                profile.InsuranceProvider,
+                profile.InsurancePolicyNumber,
+                profile.OrganDonorStatus,
+                profile.FirstResponderNotes,
                 profile.Allergies.OrderBy(item => item.Name).ThenBy(item => item.Id)
                     .Select(item => new AllergyResponse(item.Id, item.Name, item.Reaction, item.Severity)).ToArray(),
                 profile.MedicalConditions.OrderBy(item => item.Name).ThenBy(item => item.Id)

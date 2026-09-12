@@ -66,6 +66,12 @@ final sampleProfile = EmergencyProfile(
   fullName: 'Amina Yusuf',
   dateOfBirth: DateTime.utc(1997, 4, 12),
   bloodGroup: 'OPositive',
+  primaryPhysicianName: 'Dr. Fadumo Abdi',
+  primaryPhysicianPhone: '+252612345670',
+  insuranceProvider: 'LifeGuard Demo Health',
+  insurancePolicyNumber: 'DEMO-2026-001',
+  organDonorStatus: 'Donor',
+  firstResponderNotes: 'Carries a prescribed rescue inhaler.',
   allergies: const <Allergy>[
     Allergy(
       id: 'allergy-id',

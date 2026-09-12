@@ -265,6 +265,14 @@ public sealed class ApiIntegrationTests
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
         Assert.NotNull(updatedProfile);
         Assert.Equal("Updated Test Patient", updatedProfile.FullName);
+        Assert.Equal("Dr. Fadumo Abdi", updatedProfile.PrimaryPhysicianName);
+        Assert.Equal("+252612345670", updatedProfile.PrimaryPhysicianPhone);
+        Assert.Equal("LifeGuard Test Cover", updatedProfile.InsuranceProvider);
+        Assert.Equal("TEST-2026-001", updatedProfile.InsurancePolicyNumber);
+        Assert.Equal(OrganDonorStatus.Donor, updatedProfile.OrganDonorStatus);
+        Assert.Equal(
+            "Carries a prescribed rescue inhaler.",
+            updatedProfile.FirstResponderNotes);
         Assert.NotNull(updateResponse.Headers.ETag);
         Assert.NotEqual(initialEtag.Tag, updateResponse.Headers.ETag.Tag);
 
@@ -362,6 +370,9 @@ public sealed class ApiIntegrationTests
             .ReadFromJsonAsync<DoctorEmergencySnapshotResponse>(JsonOptions);
         Assert.Equal(HttpStatusCode.OK, snapshotResponse.StatusCode);
         Assert.Equal("Test Patient", snapshot?.Profile.FullName);
+        Assert.Equal("Dr. Test Physician", snapshot?.Profile.PrimaryPhysicianName);
+        Assert.Equal(OrganDonorStatus.Donor, snapshot?.Profile.OrganDonorStatus);
+        Assert.Contains("rescue inhaler", snapshot?.Profile.FirstResponderNotes);
 
         var dashboard = await patientClient.GetFromJsonAsync<PatientAccessDashboardResponse>(
             "/api/v1/patients/me/emergency-access", JsonOptions);
@@ -850,6 +861,12 @@ public sealed class ApiIntegrationTests
             FullName = fullName,
             DateOfBirth = new DateOnly(1997, 4, 12),
             BloodGroup = BloodGroup.OPositive,
+            PrimaryPhysicianName = "Dr. Fadumo Abdi",
+            PrimaryPhysicianPhone = "+252612345670",
+            InsuranceProvider = "LifeGuard Test Cover",
+            InsurancePolicyNumber = "TEST-2026-001",
+            OrganDonorStatus = OrganDonorStatus.Donor,
+            FirstResponderNotes = "Carries a prescribed rescue inhaler.",
             Allergies =
             [
                 new AllergyInput

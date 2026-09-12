@@ -71,6 +71,13 @@ internal sealed class DemoDataSeeder(
                 FullName = _options.Patient.DisplayName.Trim(),
                 DateOfBirth = new DateOnly(1997, 4, 12),
                 BloodGroup = BloodGroup.OPositive,
+                PrimaryPhysicianName = "Dr. Fadumo Abdi",
+                PrimaryPhysicianPhone = "+252612345670",
+                InsuranceProvider = "LifeGuard Demo Health",
+                InsurancePolicyNumber = "DEMO-2026-001",
+                OrganDonorStatus = OrganDonorStatus.Unknown,
+                FirstResponderNotes =
+                    "Synthetic demonstration note: keep the patient's rescue inhaler nearby.",
                 UpdatedAtUtc = now,
                 Version = Guid.NewGuid(),
                 Allergies =

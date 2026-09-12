@@ -112,6 +112,12 @@ internal sealed class EmergencyProfileService(
         profile.FullName = request.FullName!.Trim();
         profile.DateOfBirth = request.DateOfBirth!.Value;
         profile.BloodGroup = request.BloodGroup!.Value;
+        profile.PrimaryPhysicianName = NormalizeOptional(request.PrimaryPhysicianName);
+        profile.PrimaryPhysicianPhone = NormalizeOptional(request.PrimaryPhysicianPhone);
+        profile.InsuranceProvider = NormalizeOptional(request.InsuranceProvider);
+        profile.InsurancePolicyNumber = NormalizeOptional(request.InsurancePolicyNumber);
+        profile.OrganDonorStatus = request.OrganDonorStatus;
+        profile.FirstResponderNotes = NormalizeOptional(request.FirstResponderNotes);
         profile.UpdatedAtUtc = now;
         profile.Version = Guid.NewGuid();
         profile.Allergies = request.Allergies!

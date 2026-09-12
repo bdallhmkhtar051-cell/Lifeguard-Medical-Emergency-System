@@ -123,6 +123,7 @@ void main() {
     await tester.pumpWidget(harness.app);
     await tester.pumpAndSettle();
     expect(find.text('Penicillin'), findsOneWidget);
+    expect(find.text('Dr. Fadumo Abdi'), findsOneWidget);
     // The dashboard intentionally repeats the critical blood group in both the
     // Medical ID header and the detailed emergency-summary card.
     expect(find.text('O+'), findsWidgets);
@@ -130,10 +131,16 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('edit-profile-button')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('blood-group-field')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('organ-donor-status-field')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const ValueKey('save-profile-button')));
     await tester.pumpAndSettle();
     expect(profiles.updateCalls, 1);
+    expect(profiles.receivedProfile?.primaryPhysicianName, 'Dr. Fadumo Abdi');
+    expect(profiles.receivedProfile?.organDonorStatus, 'Donor');
     expect(find.text('Emergency profile saved.'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('logout-button')));

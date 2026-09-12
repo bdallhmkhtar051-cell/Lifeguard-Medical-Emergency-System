@@ -18,7 +18,7 @@ audit system.
 - **Later client:** a focused Flutter Android/iOS patient application using the
   same API
 
-Eleven development checkpoints are implemented. A seeded patient can sign in,
+Twelve development checkpoints are implemented. A seeded patient can sign in,
 maintain an SQL-backed emergency profile, grant a doctor time-limited access,
 revoke it, and inspect the resulting access history. Doctors see only
 authorized snapshots, can append clinical encounters, and every opened
@@ -91,6 +91,13 @@ Implemented at checkpoint 11:
 - active-destination highlighting and drawer sign-out;
 - mobile-width and role-isolation widget tests.
 
+Implemented at checkpoint 12:
+
+- patient-reported primary physician and insurance information;
+- explicit unknown/donor/not-donor status without claiming registry proof;
+- first-responder notes shown to patients and authorized doctors;
+- synchronized SQL, ASP.NET, Flutter, AI-summary input, validation, and tests.
+
 Real WebAuthn/passkeys and production hardening/deployment are future work.
 
 ## Start here
@@ -103,12 +110,13 @@ Real WebAuthn/passkeys and production hardening/deployment are future work.
 5. Demonstrate the [checkpoint 09 medical-document workflow](docs/DEVELOPMENT_CHECKPOINT_09.md).
 6. Demonstrate the [checkpoint 10 biometric simulation](docs/DEVELOPMENT_CHECKPOINT_10.md).
 7. Review the [checkpoint 11 role-aware navigation](docs/DEVELOPMENT_CHECKPOINT_11.md).
-8. Review the [recommended architecture](docs/ARCHITECTURE.md).
-9. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
-10. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
-11. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
+8. Review the [checkpoint 12 patient emergency information](docs/DEVELOPMENT_CHECKPOINT_12.md).
+9. Review the [recommended architecture](docs/ARCHITECTURE.md).
+10. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
+11. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
+12. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
    correct medical project-description document.
-12. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
+13. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
    the design for a future real passkey implementation.
 
 ## Run locally

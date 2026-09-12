@@ -1159,6 +1159,31 @@ class _SnapshotGrid extends StatelessWidget {
           (item) => '${item.name} • ${item.relationship} • ${item.phoneNumber}',
         ),
       ),
+      _SnapshotSection(
+        title: 'Care and coverage',
+        icon: Icons.health_and_safety_outlined,
+        color: const Color(0xFF0F766E),
+        values: <String>[
+          if (profile.primaryPhysicianName.isNotEmpty ||
+              profile.primaryPhysicianPhone.isNotEmpty)
+            'Physician: ${profile.primaryPhysicianName.isEmpty ? 'Not recorded' : profile.primaryPhysicianName}'
+                '${profile.primaryPhysicianPhone.isEmpty ? '' : ' • ${profile.primaryPhysicianPhone}'}',
+          if (profile.insuranceProvider.isNotEmpty ||
+              profile.insurancePolicyNumber.isNotEmpty)
+            'Insurance: ${profile.insuranceProvider.isEmpty ? 'Not recorded' : profile.insuranceProvider}'
+                '${profile.insurancePolicyNumber.isEmpty ? '' : ' • ${profile.insurancePolicyNumber}'}',
+        ],
+      ),
+      _SnapshotSection(
+        title: 'First-responder information',
+        icon: Icons.emergency_outlined,
+        color: const Color(0xFFB45309),
+        values: <String>[
+          'Donor status: ${organDonorStatusLabels[profile.organDonorStatus] ?? profile.organDonorStatus}',
+          if (profile.firstResponderNotes.isNotEmpty)
+            'Patient-reported notes: ${profile.firstResponderNotes}',
+        ],
+      ),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
