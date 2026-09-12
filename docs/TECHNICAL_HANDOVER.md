@@ -10,7 +10,7 @@
 
 **Base commit:** `80011f1` (`feat: add role-aware workspace navigation`)
 
-**Working milestone:** checkpoint 12 patient emergency information
+**Working milestone:** checkpoint 13 doctor workspace organization
 **Primary local root:** `C:\Users\hp\Documents\flutter projects\my flutter projects\Emergency system\emergency_system`
 
 This document is the source-of-truth handover for continuing development in a
@@ -359,9 +359,11 @@ initialization.
 - QR scanner preview height is derived from viewport height and its dialog is
   scrollable, resolving the previous 67-pixel bottom overflow.
 - The hamburger drawer is available at desktop and narrow widths.
+- The doctor directory provides name search, access-status filters, live result
+  counts, and rows that stack their action button below 620 px.
 
-The automated narrow-width baseline is 390 x 760. Not every doctor snapshot
-subcomponent has its own narrow-screen test; see Known Problems.
+The automated narrow-width baseline is 390 px. Patient navigation, the Medical
+ID card, QR scanner, and doctor credential/directory have explicit narrow tests.
 
 ### Reusable widgets/components
 
@@ -441,7 +443,7 @@ Status vocabulary:
 - **API:** no direct endpoint; logout clears local JWT. Child pages call their
   own APIs.
 - **State:** destination initialized from the authenticated single role.
-- **Status:** Finished. This navigation was checkpoint 11; checkpoint 12 is the
+- **Status:** Finished. This navigation was checkpoint 11; checkpoint 13 is the
   current latest milestone.
 
 ### Patient Medical ID portal and overview
@@ -882,10 +884,10 @@ and other small confirmations/feedback.
 
 ### Last completed full verification
 
-The checkpoint 12 verification completed on 12 September 2026 reported:
+The checkpoint 13 verification completed on 12 September 2026 reported:
 
 - Flutter analyzer: no issues;
-- Flutter tests: **39 passed**;
+- Flutter tests: **41 passed**;
 - backend Application tests: **6 passed**;
 - backend API integration tests: **23 passed**;
 - ASP.NET solution build: zero warnings and zero errors;
@@ -928,6 +930,8 @@ Feature tests:
   redemption after login, and camera workflow through a test seam;
 - clinical timeline contents;
 - patient document metadata/deletion.
+- doctor patient-directory search, authorization filters, result counts, and
+  narrow-layout overflow protection.
 
 There is no golden/screenshot test, end-to-end browser automation suite, or
 coverage threshold.
@@ -1051,34 +1055,28 @@ Preserve these unless the user explicitly requests a redesign:
 
 ### Pending feature milestones
 
-1. **Doctor workspace organization:** search/filter directory, improve narrow
-   rows, clearer snapshot sections and actions.
-2. **Presentation utilities:** About LifeGuard, print-friendly verified summary,
+1. **Presentation utilities:** About LifeGuard, print-friendly verified summary,
    and clearer audit navigation.
-3. **Accessibility/settings:** text-size, high contrast, reduced motion, session
+2. **Accessibility/settings:** text-size, high contrast, reduced motion, session
    information, keyboard and screen-reader verification.
-4. **Optional access request:** doctor request -> patient approve/reject ->
+3. **Optional access request:** doctor request -> patient approve/reject ->
    expiry/purpose/status/audit. Existing direct patient grant already meets the
    essential consent use case.
-5. **Final verification/evidence:** manual workflows, screenshots, security
+4. **Final verification/evidence:** manual workflows, screenshots, security
    cases, deployment configuration, and thesis handover/test tables.
 
 ## 14. Next Steps in Priority Order
 
-1. Re-run `.\scripts\verify-all.cmd` and capture a complete current result;
-   do not rely on the interrupted 11 September rerun.
-2. Manually inspect the new drawer and role isolation in Chrome using patient,
+1. Manually inspect the drawer and role isolation in Chrome using patient,
    doctor, and administrator demo accounts.
-3. Complete the phone-to-laptop physical QR scan and camera-permission checks.
-4. Improve doctor directory organization and narrow-screen behavior without
-   rewriting the working access workflow.
-5. Add presentation utilities that use verified stored data, including an
+2. Complete the phone-to-laptop physical QR scan and camera-permission checks.
+3. Add presentation utilities that use verified stored data, including an
    About page and print-safe clinical summary.
-6. Add accessibility/settings after core content is stable.
-7. Add doctor access requests only if thesis time remains.
-8. Perform final security, browser, responsive, SQL Server, deployment, and
+4. Add accessibility/settings after core content is stable.
+5. Add doctor access requests only if thesis time remains.
+6. Perform final security, browser, responsive, SQL Server, deployment, and
    thesis-evidence verification.
-9. Update this handover, `README.md`, checkpoint docs, and Chapter 4-6 evidence
+7. Update this handover, `README.md`, checkpoint docs, and Chapter 4-6 evidence
     after each genuinely completed milestone.
 
 ## 15. Important Files to Read First
@@ -1147,6 +1145,9 @@ route, DTO key, test fake, and endpoint.
 - Checkpoint 12 added patient-reported physician, insurance, donor-status, and
   first-responder information across SQL Server, ASP.NET, Flutter, authorized
   doctor views, and guarded AI input. It deliberately did not add DNR/DNI.
+- Checkpoint 13 added doctor-directory search and access filters, responsive
+  credential/directory layouts, QR privacy guidance, and clearer AI safety
+  guidance without changing the server-enforced access model.
 - The correct latest commit is `80011f1`; do not use the earlier mistyped
   `800codes1` identifier.
 
@@ -1155,12 +1156,12 @@ route, DTO key, test fake, and endpoint.
 - Remote: `https://github.com/bdallhmkhtar051-cell/Lifeguard-Medical-Emergency-System.git`
 - Repository is private according to the project setup history; verify access
   in GitHub rather than assuming from the remote URL alone.
-- Checkpoint 12 follows base commit `80011f1`; use `git log -1 --oneline` for
+- Checkpoint 13 follows base commit `e7362ed`; use `git log -1 --oneline` for
   the exact checkpoint commit identifier.
 - Locally generated thesis PDF/output artifacts were untracked:
   `LifeGuard_Thesis_Handover.pdf` and `output/`. Do not commit them unless the
   user explicitly decides to version generated evidence.
-- This Markdown handover is intended to be versioned with checkpoint 12.
+- This Markdown handover is intended to be versioned with checkpoint 13.
 
 Recent history before this file:
 

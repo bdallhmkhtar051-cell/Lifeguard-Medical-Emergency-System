@@ -452,61 +452,69 @@ class _ClinicianCredential extends StatelessWidget {
                   alignment: WrapAlignment.spaceBetween,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF14B8A6), Color(0xFF0F766E)],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0x6645E6D1)),
-                          ),
-                          child: Text(
-                            _initials(user.displayName),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Doctor workspace',
-                              style: TextStyle(
-                                color: Color(0xFF5EEAD4),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: .8,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF14B8A6), Color(0xFF0F766E)],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0x6645E6D1),
                               ),
                             ),
-                            Text(
-                              user.displayName,
+                            child: Text(
+                              _initials(user.displayName),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-                            Text(
-                              user.email,
-                              style: const TextStyle(
-                                color: Color(0xFFCBD5E1),
-                                fontSize: 11,
-                                fontFamily: 'monospace',
-                              ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Doctor workspace',
+                                  style: TextStyle(
+                                    color: Color(0xFF5EEAD4),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: .8,
+                                  ),
+                                ),
+                                Text(
+                                  user.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  user.email,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFFCBD5E1),
+                                    fontSize: 11,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -531,45 +539,65 @@ class _ClinicianCredential extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _Metric(
-                        label: 'Authorized patients',
-                        value: '$patientCount',
-                        color: const Color(0xFF5EEAD4),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: _Metric(
-                        label: 'Clinical mode',
-                        value: 'READ + DOCUMENT',
-                        color: Color(0xFF60A5FA),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: _Metric(
-                        label: 'Audit status',
-                        value: 'ACTIVE',
-                        color: Color(0xFF34D399),
-                      ),
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 620;
+                    final metricWidth = compact
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - 20) / 3;
+                    return Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        SizedBox(
+                          width: metricWidth,
+                          child: _Metric(
+                            label: 'Authorized patients',
+                            value: '$patientCount',
+                            color: const Color(0xFF5EEAD4),
+                          ),
+                        ),
+                        SizedBox(
+                          width: metricWidth,
+                          child: const _Metric(
+                            label: 'Clinical mode',
+                            value: 'READ + DOCUMENT',
+                            color: Color(0xFF60A5FA),
+                          ),
+                        ),
+                        SizedBox(
+                          width: metricWidth,
+                          child: const _Metric(
+                            label: 'Audit status',
+                            value: 'ACTIVE',
+                            color: Color(0xFF34D399),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 14),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.icon(
-                    key: const ValueKey('scan-medical-qr-button'),
-                    onPressed: busy ? null : onScanMedicalQr,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF0D9488),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Text(
+                      'Scan the patient’s current one-use code. Camera images stay on this device.',
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                     ),
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text('Scan Medical ID QR'),
-                  ),
+                    FilledButton.icon(
+                      key: const ValueKey('scan-medical-qr-button'),
+                      onPressed: busy ? null : onScanMedicalQr,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF0D9488),
+                      ),
+                      icon: const Icon(Icons.qr_code_scanner),
+                      label: const Text('Scan Medical ID QR'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -624,7 +652,9 @@ class _Metric extends StatelessWidget {
   }
 }
 
-class _PatientDirectory extends StatelessWidget {
+enum _DirectoryFilter { all, authorized, locked, emergency }
+
+class _PatientDirectory extends StatefulWidget {
   const _PatientDirectory({
     required this.patients,
     required this.access,
@@ -640,28 +670,122 @@ class _PatientDirectory extends StatelessWidget {
   final ValueChanged<DoctorPatient> onBreakGlass;
 
   @override
+  State<_PatientDirectory> createState() => _PatientDirectoryState();
+}
+
+class _PatientDirectoryState extends State<_PatientDirectory> {
+  final _search = TextEditingController();
+  _DirectoryFilter _filter = _DirectoryFilter.all;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  DoctorAccess? _accessFor(DoctorPatient patient) => widget.access
+      .where((item) => item.patientProfileId == patient.id)
+      .firstOrNull;
+
+  bool _matches(DoctorPatient patient) {
+    final query = _search.text.trim().toLowerCase();
+    if (query.isNotEmpty && !patient.name.toLowerCase().contains(query)) {
+      return false;
+    }
+    final access = _accessFor(patient);
+    return switch (_filter) {
+      _DirectoryFilter.all => true,
+      _DirectoryFilter.authorized => access != null,
+      _DirectoryFilter.locked => access == null,
+      _DirectoryFilter.emergency =>
+        access?.accessType == EmergencyAccessKind.breakGlass,
+    };
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final visiblePatients = widget.patients.where(_matches).toList();
     return Card(
+      key: const ValueKey('doctor-patient-directory'),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'PATIENT DIRECTORY & EMERGENCY ACCESS',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                letterSpacing: .8,
-              ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text(
+                  'PATIENT DIRECTORY & EMERGENCY ACCESS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: .8,
+                  ),
+                ),
+                Text(
+                  '${visiblePatients.length} OF ${widget.patients.length} PATIENTS',
+                  key: const ValueKey('doctor-directory-result-count'),
+                  style: const TextStyle(
+                    color: Color(0xFF0F766E),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 5),
             const Text(
-              'Use consented access when available. Break-glass is limited to a genuine emergency and fully audited.',
+              'Open an active authorization whenever possible. Break-glass is for a genuine emergency and is fully audited.',
               style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
             ),
             const SizedBox(height: 14),
-            if (patients.isEmpty)
+            TextField(
+              key: const ValueKey('doctor-patient-search'),
+              controller: _search,
+              enabled: !widget.busy,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                labelText: 'Search patients',
+                hintText: 'Enter a patient name',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _search.text.isEmpty
+                    ? null
+                    : IconButton(
+                        key: const ValueKey('clear-doctor-patient-search'),
+                        tooltip: 'Clear search',
+                        onPressed: () {
+                          _search.clear();
+                          setState(() {});
+                        },
+                        icon: const Icon(Icons.clear),
+                      ),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _DirectoryFilter.values
+                  .map(
+                    (filter) => FilterChip(
+                      key: ValueKey('doctor-filter-${filter.name}'),
+                      label: Text(_filterLabel(filter)),
+                      selected: _filter == filter,
+                      onSelected: widget.busy
+                          ? null
+                          : (_) => setState(() => _filter = filter),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 14),
+            if (widget.patients.isEmpty)
               Container(
                 padding: const EdgeInsets.all(28),
                 alignment: Alignment.center,
@@ -675,16 +799,29 @@ class _PatientDirectory extends StatelessWidget {
                   style: TextStyle(color: Color(0xFF64748B)),
                 ),
               )
+            else if (visiblePatients.isEmpty)
+              Container(
+                key: const ValueKey('doctor-directory-empty-filter'),
+                padding: const EdgeInsets.all(28),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Text(
+                  'No patients match this search and filter.',
+                  style: TextStyle(color: Color(0xFF64748B)),
+                ),
+              )
             else
-              for (final patient in patients)
+              for (final patient in visiblePatients)
                 _PatientDirectoryRow(
                   patient: patient,
-                  access: access
-                      .where((item) => item.patientProfileId == patient.id)
-                      .firstOrNull,
-                  busy: busy,
-                  onOpen: onOpen,
-                  onBreakGlass: onBreakGlass,
+                  access: _accessFor(patient),
+                  busy: widget.busy,
+                  onOpen: widget.onOpen,
+                  onBreakGlass: widget.onBreakGlass,
                 ),
           ],
         ),
@@ -692,6 +829,13 @@ class _PatientDirectory extends StatelessWidget {
     );
   }
 }
+
+String _filterLabel(_DirectoryFilter filter) => switch (filter) {
+  _DirectoryFilter.all => 'All',
+  _DirectoryFilter.authorized => 'Authorized',
+  _DirectoryFilter.locked => 'Locked',
+  _DirectoryFilter.emergency => 'Break-glass',
+};
 
 class _PatientDirectoryRow extends StatelessWidget {
   const _PatientDirectoryRow({
@@ -713,6 +857,64 @@ class _PatientDirectoryRow extends StatelessWidget {
     final currentAccess = access;
     final emergency =
         currentAccess?.accessType == EmergencyAccessKind.breakGlass;
+    final identity = Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: emergency
+              ? const Color(0xFFFEE2E2)
+              : const Color(0xFFD1FAE5),
+          foregroundColor: emergency
+              ? const Color(0xFFB91C1C)
+              : const Color(0xFF047857),
+          child: const Icon(Icons.person_outline),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                patient.name,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                currentAccess == null
+                    ? 'RECORD LOCKED • EMERGENCY OVERRIDE AVAILABLE'
+                    : '${_accessLabel(currentAccess.accessType)} ACCESS EXPIRES ${_time(currentAccess.expiresAt)}',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 9,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    final action = currentAccess != null
+        ? FilledButton.icon(
+            onPressed: busy ? null : () => onOpen(currentAccess),
+            style: FilledButton.styleFrom(
+              backgroundColor: emergency
+                  ? const Color(0xFFDC2626)
+                  : const Color(0xFF059669),
+            ),
+            icon: const Icon(Icons.lock_open_outlined, size: 16),
+            label: const Text('Open EHR'),
+          )
+        : FilledButton.icon(
+            key: ValueKey('break-glass-${patient.id}'),
+            onPressed: busy ? null : () => onBreakGlass(patient),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+            icon: const Icon(Icons.emergency_outlined, size: 16),
+            label: const Text('Break glass'),
+          );
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(12),
@@ -721,64 +923,22 @@ class _PatientDirectoryRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: emergency
-                ? const Color(0xFFFEE2E2)
-                : const Color(0xFFD1FAE5),
-            foregroundColor: emergency
-                ? const Color(0xFFB91C1C)
-                : const Color(0xFF047857),
-            child: const Icon(Icons.person_outline),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  patient.name,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  currentAccess == null
-                      ? 'RECORD LOCKED • EMERGENCY OVERRIDE AVAILABLE'
-                      : '${_accessLabel(currentAccess.accessType)} ACCESS EXPIRES ${_time(currentAccess.expiresAt)}',
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 9,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (currentAccess != null)
-            FilledButton.icon(
-              onPressed: busy ? null : () => onOpen(currentAccess),
-              style: FilledButton.styleFrom(
-                backgroundColor: emergency
-                    ? const Color(0xFFDC2626)
-                    : const Color(0xFF059669),
-              ),
-              icon: const Icon(Icons.lock_open_outlined, size: 16),
-              label: const Text('Open EHR'),
-            )
-          else
-            FilledButton.icon(
-              key: ValueKey('break-glass-${patient.id}'),
-              onPressed: busy ? null : () => onBreakGlass(patient),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFDC2626),
-              ),
-              icon: const Icon(Icons.emergency_outlined, size: 16),
-              label: const Text('Break glass'),
-            ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 620) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [identity, const SizedBox(height: 10), action],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: identity),
+              const SizedBox(width: 12),
+              action,
+            ],
+          );
+        },
       ),
     );
   }
@@ -993,13 +1153,42 @@ class _ClinicalSnapshot extends StatelessWidget {
         const SizedBox(height: 18),
         _SnapshotGrid(profile: profile),
         const SizedBox(height: 18),
-        Align(
-          alignment: Alignment.centerRight,
-          child: OutlinedButton.icon(
-            key: const ValueKey('generate-ai-summary'),
-            onPressed: busy ? null : onGenerateAiSummary,
-            icon: const Icon(Icons.auto_awesome, size: 18),
-            label: const Text('Generate AI summary'),
+        Card(
+          color: const Color(0xFFF8FAFC),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CLINICAL TOOLS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: .8,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'AI summaries are temporary decision support and must be verified by the clinician.',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                    ),
+                  ],
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('generate-ai-summary'),
+                  onPressed: busy ? null : onGenerateAiSummary,
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('Generate AI summary'),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 12),

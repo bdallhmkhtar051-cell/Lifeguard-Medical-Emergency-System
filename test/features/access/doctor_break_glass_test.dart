@@ -54,6 +54,88 @@ void main() {
     expect(find.textContaining('BREAK-GLASS EMERGENCY'), findsOneWidget);
     expect(find.textContaining(reason), findsOneWidget);
   });
+
+  testWidgets('doctor can search and filter the patient directory', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DoctorAccessPage(
+          repository: _DirectoryRepository(),
+          clinicalRepository: FakeClinicalRepository(),
+          user: sampleDoctor,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Amina Yusuf'), findsOneWidget);
+    expect(find.text('Bashir Noor'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('doctor-patient-search')),
+      'Bashir',
+    );
+    await tester.pump();
+    expect(find.text('Amina Yusuf'), findsNothing);
+    expect(find.text('Bashir Noor'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('clear-doctor-patient-search')));
+    await tester.tap(find.byKey(const ValueKey('doctor-filter-authorized')));
+    await tester.pump();
+    expect(find.text('Amina Yusuf'), findsOneWidget);
+    expect(find.text('Bashir Noor'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('doctor-filter-locked')));
+    await tester.pump();
+    expect(find.text('Amina Yusuf'), findsNothing);
+    expect(find.text('Bashir Noor'), findsOneWidget);
+  });
+
+  testWidgets('doctor patient directory remains usable on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DoctorAccessPage(
+          repository: _DirectoryRepository(),
+          clinicalRepository: FakeClinicalRepository(),
+          user: sampleDoctor,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('doctor-patient-search')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
+
+class _DirectoryRepository extends _BreakGlassRepository {
+  @override
+  Future<List<DoctorPatient>> doctorDirectory() async => const [
+    DoctorPatient(id: 'authorized-id', name: 'Amina Yusuf'),
+    DoctorPatient(id: 'locked-id', name: 'Bashir Noor'),
+  ];
+
+  @override
+  Future<List<DoctorAccess>> doctorAccess() async => [
+    DoctorAccess(
+      id: 'authorized-grant',
+      patientProfileId: 'authorized-id',
+      patientName: 'Amina Yusuf',
+      expiresAt: DateTime.now().add(const Duration(hours: 1)),
+      accessType: EmergencyAccessKind.consented,
+    ),
+  ];
 }
 
 class _BreakGlassRepository implements AccessRepository {
