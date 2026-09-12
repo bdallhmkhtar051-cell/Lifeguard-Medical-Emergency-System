@@ -139,12 +139,16 @@ Real WebAuthn/passkeys and production hardening/deployment are future work.
 9. Review the [checkpoint 13 doctor workspace](docs/DEVELOPMENT_CHECKPOINT_13.md).
 10. Review the [checkpoint 14 presentation utilities](docs/DEVELOPMENT_CHECKPOINT_14.md).
 11. Review the [checkpoint 15 accessibility settings](docs/DEVELOPMENT_CHECKPOINT_15.md).
-12. Review the [recommended architecture](docs/ARCHITECTURE.md).
-13. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
-14. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
-15. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
+12. Follow the [final verification report](docs/FINAL_VERIFICATION_REPORT.md)
+    and complete its physical Chrome checks.
+13. Use the [thesis demonstration runbook](docs/THESIS_DEMONSTRATION_RUNBOOK.md)
+    and [evidence checklist](docs/THESIS_EVIDENCE_CHECKLIST.md).
+14. Review the [recommended architecture](docs/ARCHITECTURE.md).
+15. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
+16. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
+17. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
    correct medical project-description document.
-16. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
+18. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
    the design for a future real passkey implementation.
 
 ## Run locally

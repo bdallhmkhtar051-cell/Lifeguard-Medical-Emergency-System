@@ -892,7 +892,14 @@ The checkpoint 15 verification completed on 12 September 2026 reported:
 - backend API integration tests: **23 passed**;
 - ASP.NET solution build: zero warnings and zero errors;
 - Flutter Web release build: passed;
-- the new EF migration was applied to local SQL Server.
+- the latest EF migration was present in local SQL Server.
+
+The final all-in-one Release verification was repeated successfully on 12
+September 2026 through `scripts/verify-all.cmd`. A live Development API startup
+also queried the local SQL Server successfully and returned HTTP 200 from
+`GET /health`. See `docs/FINAL_VERIFICATION_REPORT.md`. Physical camera,
+phone-to-laptop QR, browser print, keyboard/screen-reader, and screenshot checks
+remain explicitly pending user-assisted execution.
 
 ### Flutter test inventory
 
@@ -1061,8 +1068,10 @@ Preserve these unless the user explicitly requests a redesign:
 1. **Optional access request:** doctor request -> patient approve/reject ->
    expiry/purpose/status/audit. Existing direct patient grant already meets the
    essential consent use case.
-2. **Final verification/evidence:** manual workflows, screenshots, security
-   cases, deployment configuration, and thesis handover/test tables.
+2. **Final verification/evidence:** automated Release verification, live API,
+   SQL connectivity, configuration audit, test tables, runbook, and evidence
+   templates are complete. Manual Chrome/camera/print/accessibility workflows
+   and screenshots remain.
 
 ## 14. Next Steps in Priority Order
 
@@ -1070,8 +1079,8 @@ Preserve these unless the user explicitly requests a redesign:
    doctor, and administrator demo accounts.
 2. Complete the phone-to-laptop physical QR scan and camera-permission checks.
 3. Add doctor access requests only if thesis time remains.
-4. Perform final security, browser, responsive, SQL Server, deployment, and
-   thesis-evidence verification.
+4. Complete manual items M01-M15 in `docs/FINAL_VERIFICATION_REPORT.md`, fill
+   the evidence register, and capture synthetic-data screenshots.
 5. Update this handover, `README.md`, checkpoint docs, and Chapter 4-6 evidence
     after each genuinely completed milestone.
 
