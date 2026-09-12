@@ -3,6 +3,10 @@ import '../../core/network/api_exception.dart';
 import 'access_models.dart';
 
 abstract interface class AccessRepository {
+  Future<DoctorProfessionalProfile> doctorProfile();
+  Future<DoctorProfessionalProfile> updateDoctorProfile(
+    DoctorProfessionalProfile profile,
+  );
   Future<PatientAccessDashboard> patientDashboard();
   Future<void> grant({required String doctorEmail, required int minutes});
   Future<void> revoke(String grantId);
@@ -25,6 +29,28 @@ class ApiAccessRepository implements AccessRepository {
   static const _patientQrPath = '/api/v1/patients/me/medical-qr';
   static const _doctorPath = '/api/v1/doctors/emergency-access';
   final ApiClient _api;
+
+  @override
+  Future<DoctorProfessionalProfile> doctorProfile() async =>
+      DoctorProfessionalProfile.fromJson(
+        (await _api.getJson('/api/v1/doctors/me/profile')).requireObject(),
+      );
+
+  @override
+  Future<DoctorProfessionalProfile> updateDoctorProfile(
+    DoctorProfessionalProfile profile,
+  ) async => DoctorProfessionalProfile.fromJson(
+    (await _api.putJson(
+      '/api/v1/doctors/me/profile',
+      body: {
+        'professionalTitle': profile.professionalTitle,
+        'hospitalName': profile.hospitalName,
+        'department': profile.department,
+        'licenseNumber': profile.licenseNumber,
+        'phoneNumber': profile.phoneNumber,
+      },
+    )).requireObject(),
+  );
 
   @override
   Future<PatientAccessDashboard> patientDashboard() async {
@@ -143,8 +169,9 @@ class ApiAccessRepository implements AccessRepository {
   Future<AiMedicalSummary> generateAiSummary(String grantId) async {
     try {
       return AiMedicalSummary.fromJson(
-        (await _api.postJson('$_doctorPath/$grantId/ai-summary'))
-            .requireObject(),
+        (await _api.postJson(
+          '$_doctorPath/$grantId/ai-summary',
+        )).requireObject(),
       );
     } on FormatException {
       throw const ApiException.protocol();

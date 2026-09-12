@@ -222,6 +222,29 @@ class FakeAccessRepository implements AccessRepository {
     email: 'doctor@example.test',
   );
 
+  DoctorProfessionalProfile professionalProfile =
+      const DoctorProfessionalProfile(
+        displayName: 'Dr. Ali Hassan',
+        email: 'doctor@example.test',
+        professionalTitle: 'Emergency Physician',
+        hospitalName: 'LifeGuard University Hospital',
+        department: 'Emergency Medicine',
+        licenseNumber: 'DEMO-001',
+        phoneNumber: '+252611000000',
+      );
+
+  @override
+  Future<DoctorProfessionalProfile> doctorProfile() async =>
+      professionalProfile;
+
+  @override
+  Future<DoctorProfessionalProfile> updateDoctorProfile(
+    DoctorProfessionalProfile profile,
+  ) async {
+    professionalProfile = profile;
+    return profile;
+  }
+
   @override
   Future<PatientAccessDashboard> patientDashboard() async =>
       PatientAccessDashboard(

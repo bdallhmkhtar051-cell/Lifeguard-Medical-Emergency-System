@@ -10,7 +10,7 @@
 
 **Base commit:** `80011f1` (`feat: add role-aware workspace navigation`)
 
-**Working milestone:** checkpoint 15 accessibility and settings
+**Working milestone:** checkpoint 16 doctor professional profile
 **Primary local root:** `C:\Users\hp\Documents\flutter projects\my flutter projects\Emergency system\emergency_system`
 
 This document is the source-of-truth handover for continuing development in a
@@ -884,12 +884,12 @@ and other small confirmations/feedback.
 
 ### Last completed full verification
 
-The checkpoint 15 verification completed on 12 September 2026 reported:
+The checkpoint 16 verification completed on 12 September 2026 reported:
 
 - Flutter analyzer: no issues;
-- Flutter tests: **44 passed**;
+- Flutter tests: **45 passed**;
 - backend Application tests: **6 passed**;
-- backend API integration tests: **23 passed**;
+- backend API integration tests: **24 passed**;
 - ASP.NET solution build: zero warnings and zero errors;
 - Flutter Web release build: passed;
 - the latest EF migration was present in local SQL Server.
@@ -942,6 +942,7 @@ Feature tests:
 - authenticated About LifeGuard navigation and stored emergency-summary view.
 - 390-pixel accessibility settings at 130% text, high contrast, reduced motion,
   actual session details, and preference reset.
+- doctor professional-profile editing and save feedback.
 
 There is no golden/screenshot test, end-to-end browser automation suite, or
 coverage threshold.
@@ -954,7 +955,7 @@ Application validator tests (5):
   and E.164 phone;
 - valid/invalid encounter, impossible vitals, and incomplete prescription.
 
-API integration tests (23):
+API integration tests (24):
 
 - health, login/me, generic invalid-password response;
 - role denial for patient/admin/QR/break-glass routes;
@@ -967,6 +968,7 @@ API integration tests (23):
 - one-use QR grant/audit/revocation/role boundaries;
 - encounter creation/read and denial without active grant;
 - exact CORS-origin behavior.
+- doctor-profile role denial, length validation, trimming, and persistence.
 
 API tests use an in-memory SQLite database and test authentication setup via
 `EmergencySystemApiFactory`; they do not prove production SQL Server behavior.
@@ -1045,9 +1047,9 @@ Preserve these unless the user explicitly requests a redesign:
 11. **No URL routing/deep-link state beyond QR token parsing.** Browser back and
     refresh do not preserve the selected portal tab or selected patient.
 12. **No localization.** All UI is English and some widths assume current text.
-13. **No complete accessibility preferences.** Some Semantics/tooltips exist,
-    but text scaling, high contrast, reduced motion, focus order, and screen
-    reader coverage remain pending.
+13. **Accessibility still needs physical verification.** Text scaling, high
+    contrast, and reduced motion are implemented; keyboard focus order and
+    screen-reader behavior remain manual checks.
 
 ### Backend/production gaps affecting the frontend
 
@@ -1065,23 +1067,23 @@ Preserve these unless the user explicitly requests a redesign:
 
 ### Pending feature milestones
 
-1. **Optional access request:** doctor request -> patient approve/reject ->
-   expiry/purpose/status/audit. Existing direct patient grant already meets the
-   essential consent use case.
-2. **Final verification/evidence:** automated Release verification, live API,
+1. **Final verification/evidence:** automated Release verification, live API,
    SQL connectivity, configuration audit, test tables, runbook, and evidence
    templates are complete. Manual Chrome/camera/print/accessibility workflows
    and screenshots remain.
+
+The separate doctor-request/patient-approval workflow was deliberately declined
+for the thesis build. Existing direct patient grants, QR consent, and audited
+break-glass access remain the implemented authorization workflows.
 
 ## 14. Next Steps in Priority Order
 
 1. Manually inspect the drawer and role isolation in Chrome using patient,
    doctor, and administrator demo accounts.
 2. Complete the phone-to-laptop physical QR scan and camera-permission checks.
-3. Add doctor access requests only if thesis time remains.
-4. Complete manual items M01-M15 in `docs/FINAL_VERIFICATION_REPORT.md`, fill
+3. Complete manual items M01-M15 in `docs/FINAL_VERIFICATION_REPORT.md`, fill
    the evidence register, and capture synthetic-data screenshots.
-5. Update this handover, `README.md`, checkpoint docs, and Chapter 4-6 evidence
+4. Update this handover, `README.md`, checkpoint docs, and Chapter 4-6 evidence
     after each genuinely completed milestone.
 
 ## 15. Important Files to Read First
@@ -1110,7 +1112,7 @@ Recommended reading order for the next AI:
 18. Relevant Infrastructure service and EF configuration/migration
 19. `test/helpers/fakes.dart` and relevant Flutter tests
 20. `backend/tests/EmergencySystem.Api.Tests/ApiIntegrationTests.cs`
-21. `docs/DEVELOPMENT_CHECKPOINT_01.md` through `_11.md`, remembering that later
+21. `docs/DEVELOPMENT_CHECKPOINT_01.md` through `_16.md`, remembering that later
     checkpoints supersede older limitation statements
 22. `docs/ARCHITECTURE.md` and `docs/THESIS_EXECUTION_PLAN.md`
 
@@ -1158,6 +1160,8 @@ route, DTO key, test fake, and endpoint.
   summary explicitly labels its information as patient reported.
 - Checkpoint 15 added session-scoped text size, high contrast, reduced motion,
   reset controls, and actual user/token-expiry information for every role.
+- Checkpoint 16 added a doctor-only, SQL-backed professional profile with
+  explicit self-reported/unverified-licence wording.
 - The correct latest commit is `80011f1`; do not use the earlier mistyped
   `800codes1` identifier.
 
@@ -1166,12 +1170,11 @@ route, DTO key, test fake, and endpoint.
 - Remote: `https://github.com/bdallhmkhtar051-cell/Lifeguard-Medical-Emergency-System.git`
 - Repository is private according to the project setup history; verify access
   in GitHub rather than assuming from the remote URL alone.
-- Checkpoint 15 follows base commit `9f1ec24`; use `git log -1 --oneline` for
-  the exact checkpoint commit identifier.
+- Use `git log -1 --oneline` for the exact checkpoint 16 commit identifier.
 - Locally generated thesis PDF/output artifacts were untracked:
   `LifeGuard_Thesis_Handover.pdf` and `output/`. Do not commit them unless the
   user explicitly decides to version generated evidence.
-- This Markdown handover is intended to be versioned with checkpoint 15.
+- This Markdown handover is versioned with checkpoint 16.
 
 Recent history before this file:
 

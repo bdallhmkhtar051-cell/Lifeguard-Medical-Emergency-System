@@ -143,6 +143,15 @@ class _BreakGlassRepository implements AccessRepository {
   String? receivedReason;
 
   @override
+  Future<DoctorProfessionalProfile> doctorProfile() =>
+      throw UnimplementedError();
+
+  @override
+  Future<DoctorProfessionalProfile> updateDoctorProfile(
+    DoctorProfessionalProfile profile,
+  ) => throw UnimplementedError();
+
+  @override
   Future<List<DoctorPatient>> doctorDirectory() async => const [
     DoctorPatient(id: 'profile-id', name: 'Amina Yusuf'),
   ];

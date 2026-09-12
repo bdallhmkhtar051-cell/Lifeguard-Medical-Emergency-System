@@ -118,6 +118,10 @@ internal sealed class ApplicationUserConfiguration
     {
         builder.Property(user => user.DisplayName).HasMaxLength(100).IsRequired();
         builder.Property(user => user.CreatedAtUtc).HasPrecision(0);
+        builder.Property(user => user.ProfessionalTitle).HasMaxLength(100);
+        builder.Property(user => user.HospitalName).HasMaxLength(150);
+        builder.Property(user => user.Department).HasMaxLength(100);
+        builder.Property(user => user.LicenseNumber).HasMaxLength(80);
         builder.HasIndex(user => user.IsActive);
     }
 }

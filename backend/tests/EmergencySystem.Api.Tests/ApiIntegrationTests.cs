@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using EmergencySystem.Api.Controllers;
 using EmergencySystem.Application.Access;
 using EmergencySystem.Application.Administration;
 using EmergencySystem.Application.Authentication;
@@ -782,6 +783,43 @@ public sealed class ApiIntegrationTests
             new BreakGlassAccessRequest(Guid.NewGuid(), "Too vague"),
             JsonOptions);
         Assert.Equal(HttpStatusCode.TooManyRequests, limited.StatusCode);
+    }
+
+    [Fact]
+    public async Task Doctor_profile_is_role_protected_validated_and_persisted()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var patientClient = CreateClient(factory);
+        using var doctorClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+        await LoginAsync(doctorClient, EmergencySystemApiFactory.DoctorEmail);
+
+        var forbidden = await patientClient.GetAsync("/api/v1/doctors/me/profile");
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+        var invalid = await doctorClient.PutAsJsonAsync(
+            "/api/v1/doctors/me/profile",
+            new UpdateDoctorProfileRequest(new string('T', 101), null, null, null, null));
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+
+        var update = new UpdateDoctorProfileRequest(
+            " Emergency physician ", " LifeGuard Hospital ",
+            " Emergency Medicine ", " LIC-2048 ", "+252 61 0000000 ");
+        var updatedResponse = await doctorClient.PutAsJsonAsync(
+            "/api/v1/doctors/me/profile", update);
+        Assert.Equal(HttpStatusCode.OK, updatedResponse.StatusCode);
+        var updated = await updatedResponse.Content.ReadFromJsonAsync<DoctorProfileResponse>(JsonOptions);
+        Assert.NotNull(updated);
+        Assert.Equal("Emergency physician", updated.ProfessionalTitle);
+        Assert.Equal("LifeGuard Hospital", updated.HospitalName);
+        Assert.False(updated.LicenseVerified);
+
+        var saved = await doctorClient.GetFromJsonAsync<DoctorProfileResponse>(
+            "/api/v1/doctors/me/profile", JsonOptions);
+        Assert.NotNull(saved);
+        Assert.Equal("Emergency Medicine", saved.Department);
+        Assert.Equal("LIC-2048", saved.LicenseNumber);
     }
 
     [Fact]

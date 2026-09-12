@@ -1,7 +1,7 @@
 # LifeGuard final verification report
 
 **Verification date:** 12 September 2026  
-**Source checkpoint:** `a21b4d2`  
+**Source checkpoint:** development checkpoint 16
 **Scope:** automated Release verification, configuration audit, secret-pattern
 scan, live API startup, local SQL Server connectivity, and health response.
 
@@ -17,10 +17,10 @@ checks are deliberately listed as pending rather than reported as completed.
 |---|---:|---|
 | Backend Release restore/build | Passed | All projects restored and compiled during `verify-all.cmd` |
 | Application tests | 6 passed | No failures or skipped tests |
-| API integration tests | 23 passed | No failures or skipped tests |
+| API integration tests | 24 passed | No failures or skipped tests |
 | Flutter dependency restore | Passed | Dependencies resolved successfully |
 | Flutter static analysis | Passed | No issues found |
-| Flutter tests | 44 passed | No failures |
+| Flutter tests | 45 passed | No failures |
 | Flutter Web release build | Passed | `build/web` produced successfully |
 | Live API startup | Passed | Listening on `http://localhost:5080` |
 | Local SQL Server connectivity | Passed | EF Core successfully queried roles, users, and patient profile data |
@@ -52,6 +52,8 @@ analysis and Flutter tests, and creates the Flutter Web release build.
 - biometric simulation cannot create a real authenticated session;
 - doctor directory search/filtering and narrow-screen organization;
 - About, printable summary, accessibility settings and 130% narrow layout.
+- doctor professional-profile editing, role protection, validation, and SQL
+  persistence.
 
 ## Physical checks still required
 

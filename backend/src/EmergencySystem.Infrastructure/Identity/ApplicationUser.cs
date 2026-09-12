@@ -9,4 +9,9 @@ public sealed class ApplicationUser : IdentityUser<Guid>
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset CreatedAtUtc { get; set; }
+
+    public string? ProfessionalTitle { get; set; }
+    public string? HospitalName { get; set; }
+    public string? Department { get; set; }
+    public string? LicenseNumber { get; set; }
 }

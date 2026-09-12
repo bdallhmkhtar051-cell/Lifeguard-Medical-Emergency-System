@@ -205,7 +205,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('drawer-doctorScanQr')), findsOneWidget);
+    expect(find.byKey(const ValueKey('drawer-doctorProfile')), findsOneWidget);
     expect(find.byKey(const ValueKey('drawer-patientAccess')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('drawer-doctorProfile')));
+    await tester.pumpAndSettle();
+    expect(find.text('Professional profile'), findsOneWidget);
 
     // Remove the doctor app before mounting a separate authenticated session.
     await tester.pumpWidget(const SizedBox.shrink());
@@ -220,6 +224,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('drawer-administration')), findsOneWidget);
     expect(find.byKey(const ValueKey('drawer-doctorScanQr')), findsNothing);
+    expect(find.byKey(const ValueKey('drawer-doctorProfile')), findsNothing);
     expect(find.byKey(const ValueKey('drawer-patientOverview')), findsNothing);
   });
 

@@ -7,6 +7,7 @@ enum WorkspaceDestination {
   patientAccess,
   doctorPatients,
   doctorScanQr,
+  doctorProfile,
   administration,
   about,
   settings,

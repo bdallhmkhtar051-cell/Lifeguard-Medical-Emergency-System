@@ -353,6 +353,11 @@ class _WorkspaceDrawer extends StatelessWidget {
         'Scan Medical ID QR',
         Icons.qr_code_scanner,
       ),
+      _DrawerItem(
+        WorkspaceDestination.doctorProfile,
+        'Professional profile',
+        Icons.badge_outlined,
+      ),
     ],
     UserRole.administrator || null => const [
       _DrawerItem(

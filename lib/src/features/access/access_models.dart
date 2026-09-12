@@ -1,5 +1,37 @@
 import '../patient_profile/emergency_profile.dart';
 
+class DoctorProfessionalProfile {
+  const DoctorProfessionalProfile({
+    required this.displayName,
+    required this.email,
+    this.professionalTitle = '',
+    this.hospitalName = '',
+    this.department = '',
+    this.licenseNumber = '',
+    this.phoneNumber = '',
+    this.licenseVerified = false,
+  });
+  factory DoctorProfessionalProfile.fromJson(Map<String, dynamic> json) =>
+      DoctorProfessionalProfile(
+        displayName: json['displayName'].toString(),
+        email: json['email'].toString(),
+        professionalTitle: json['professionalTitle']?.toString() ?? '',
+        hospitalName: json['hospitalName']?.toString() ?? '',
+        department: json['department']?.toString() ?? '',
+        licenseNumber: json['licenseNumber']?.toString() ?? '',
+        phoneNumber: json['phoneNumber']?.toString() ?? '',
+        licenseVerified: json['licenseVerified'] == true,
+      );
+  final String displayName,
+      email,
+      professionalTitle,
+      hospitalName,
+      department,
+      licenseNumber,
+      phoneNumber;
+  final bool licenseVerified;
+}
+
 enum EmergencyAccessKind {
   consented,
   qrConsented,

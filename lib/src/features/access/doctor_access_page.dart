@@ -15,6 +15,7 @@ import '../home/workspace_navigation.dart';
 import 'access_models.dart';
 import 'access_repository.dart';
 import 'ai_medical_summary_dialog.dart';
+import 'doctor_profile_page.dart';
 import 'medical_qr_scanner_dialog.dart';
 
 class DoctorAccessPage extends StatefulWidget {
@@ -72,16 +73,17 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
   void _handleNavigation() {
     switch (_navigation.destination) {
       case WorkspaceDestination.doctorPatients:
-        if (_snapshot != null || _selectedAccess != null) {
-          setState(() {
-            _snapshot = null;
-            _selectedAccess = null;
-            _clinicalRecords = const [];
-          });
-        }
+        setState(() {
+          _snapshot = null;
+          _selectedAccess = null;
+          _clinicalRecords = const [];
+        });
         break;
       case WorkspaceDestination.doctorScanQr:
         unawaited(_scanFromDrawer());
+        break;
+      case WorkspaceDestination.doctorProfile:
+        setState(() {});
         break;
       default:
         break;
@@ -280,6 +282,9 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_navigation.destination == WorkspaceDestination.doctorProfile) {
+      return DoctorProfilePage(repository: widget.repository);
+    }
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 48),
