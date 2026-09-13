@@ -83,6 +83,16 @@ class _HomeShellState extends State<HomeShell> {
             onLogout: widget.sessionController.logout,
           ),
           appBar: AppBar(
+            flexibleSpace: const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF102443), Color(0xFF143C66)],
+                ),
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFF2DD4BF), width: 2),
+                ),
+              ),
+            ),
             toolbarHeight: 74,
             titleSpacing: 0,
             leading: Builder(

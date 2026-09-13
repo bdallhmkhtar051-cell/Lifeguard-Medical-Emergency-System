@@ -2,7 +2,9 @@
 param(
     [string]$ApiBaseUrl = "http://localhost:5080",
     [ValidateRange(1024, 65535)]
-    [int]$WebPort = 5000
+    [int]$WebPort = 5000,
+    [ValidateSet("debug", "profile", "release")]
+    [string]$Mode = "debug"
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,6 +14,7 @@ Push-Location $repositoryRoot
 try {
     flutter run `
         -d chrome `
+        "--$Mode" `
         --web-port $WebPort `
         --dart-define "API_BASE_URL=$ApiBaseUrl"
 

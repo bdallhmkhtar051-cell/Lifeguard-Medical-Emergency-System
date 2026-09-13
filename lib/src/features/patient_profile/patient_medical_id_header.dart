@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'emergency_profile.dart';
 import 'medical_summary_dialog.dart';
 
-const _navy = Color(0xFF0F172A);
 const _slate = Color(0xFF1E293B);
 const _border = Color(0xFF334155);
 const _muted = Color(0xFFCBD5E1);
@@ -33,9 +32,9 @@ class PatientMedicalIdHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x400F172A),
-            blurRadius: 28,
-            offset: Offset(0, 14),
+            color: Color(0x202563EB),
+            blurRadius: 16,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -44,7 +43,9 @@ class PatientMedicalIdHeader extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF020617), _navy, Color(0xFF1E2E4A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF122D62), Color(0xFF164FA5), Color(0xFF087F98)],
             ),
             border: Border.all(color: _slate),
           ),

@@ -399,15 +399,17 @@ class _ClinicianCredential extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF042F2E), Color(0xFF0F172A), Color(0xFF020617)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF103F50), Color(0xFF086F79), Color(0xFF095896)],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0x664E9F97)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x330F172A),
-            blurRadius: 24,
-            offset: Offset(0, 12),
+            color: Color(0x200F766E),
+            blurRadius: 16,
+            offset: Offset(0, 8),
           ),
         ],
       ),

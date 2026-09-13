@@ -5,8 +5,8 @@ class AppTheme {
 
   static const navy = Color(0xFF0F172A);
   static const slate = Color(0xFF1E293B);
-  static const canvas = Color(0xFFF1F5F9);
-  static const border = Color(0xFFE2E8F0);
+  static const canvas = Color(0xFFF4F8FC);
+  static const border = Color(0xFFDFE8F3);
   static const blue = Color(0xFF2563EB);
   static const teal = Color(0xFF0F766E);
 
@@ -15,19 +15,40 @@ class AppTheme {
     // restrained emergency red. Keeping these tokens here gives later patient
     // and provider screens one consistent visual language.
     const seed = blue;
-    final scheme = ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: Brightness.light,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: seed,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: blue,
+          secondary: teal,
+          surface: Colors.white,
+          onSurface: navy,
+          surfaceTint: Colors.transparent,
+          outlineVariant: border,
+        );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: canvas,
       visualDensity: VisualDensity.standard,
-      textTheme: ThemeData.light().textTheme.apply(
-        bodyColor: navy,
-        displayColor: navy,
-      ),
+      textTheme: ThemeData.light().textTheme
+          .apply(bodyColor: navy, displayColor: navy)
+          .copyWith(
+            titleLarge: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: navy,
+              letterSpacing: -.5,
+            ),
+            titleMedium: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: navy,
+            ),
+            bodyMedium: const TextStyle(fontSize: 14, height: 1.5, color: navy),
+            bodyLarge: const TextStyle(fontSize: 16, height: 1.5, color: navy),
+          ),
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         backgroundColor: navy,
@@ -36,15 +57,19 @@ class AppTheme {
         elevation: 0,
       ),
       cardTheme: CardThemeData(
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(18),
           side: const BorderSide(color: border),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           backgroundColor: blue,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
@@ -54,7 +79,11 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surface,
+        fillColor: const Color(0xFFF8FAFD),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 18,
+        ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -66,6 +95,16 @@ class AppTheme {
         ),
       ),
       dividerTheme: const DividerThemeData(color: border, thickness: 1),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: navy,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
