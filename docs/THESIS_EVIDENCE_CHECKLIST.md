@@ -16,7 +16,7 @@ JWTs, QR token URLs, real patient information, or terminal secret output.
 - [ ] Authorized doctor snapshot
 - [ ] Break-glass dialog and emergency warning
 - [ ] Clinical encounter/timeline
-- [ ] Medical documents
+- [ ] Patient document management and authorized clinician document upload
 - [ ] Guarded AI summary
 - [ ] Administrator overview
 - [ ] About LifeGuard architecture page
@@ -27,7 +27,7 @@ JWTs, QR token URLs, real patient information, or terminal secret output.
 ## Chapter 5 — test and result evidence
 
 - [ ] `verify-all.cmd` final success output
-- [ ] Test table: 6 Application + 23 API + 44 Flutter = **73 passed**
+- [ ] Test table: 6 Application + 24 API + 47 Flutter = **77 passed**
 - [ ] Live `/health` HTTP 200 result
 - [ ] Patient role cannot access doctor/admin controls
 - [ ] Doctor role cannot edit the patient-owned profile
@@ -35,6 +35,7 @@ JWTs, QR token URLs, real patient information, or terminal secret output.
 - [ ] Reused or expired QR rejection
 - [ ] Break-glass reason and audit evidence
 - [ ] Invalid document rejection and valid document workflow
+- [ ] Clinician document upload and patient-visible audit event
 - [ ] Narrow Chrome layout at 390 px
 - [ ] Accessibility layout at 130% text
 - [ ] Camera-permission result
@@ -85,3 +86,4 @@ JWTs, QR token URLs, real patient information, or terminal secret output.
 | M13 |  |  |  |  |  |  |
 | M14 |  |  |  |  |  |  |
 | M15 |  |  |  |  |  |  |
+| M16 |  |  |  |  |  |  |

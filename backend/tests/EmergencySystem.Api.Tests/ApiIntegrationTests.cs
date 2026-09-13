@@ -442,7 +442,11 @@ public sealed class ApiIntegrationTests
         Assert.Equal(HttpStatusCode.BadRequest, disguisedResponse.StatusCode);
 
         using var upload = new MultipartFormDataContent();
-        var pdf = new ByteArrayContent("%PDF-1.7 synthetic medical report"u8.ToArray());
+        // Larger than the API's normal 64 KB JSON limit: the document endpoint
+        // must explicitly allow bounded medical-file uploads.
+        var pdfBytes = new byte[128 * 1024];
+        "%PDF-1.7 synthetic medical report"u8.CopyTo(pdfBytes);
+        var pdf = new ByteArrayContent(pdfBytes);
         pdf.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
         upload.Add(pdf, "file", "laboratory-report.pdf");
         upload.Add(new StringContent("Lab result"), "category");
@@ -466,11 +470,24 @@ public sealed class ApiIntegrationTests
             .ReadFromJsonAsync<EmergencyAccessGrantResponse>(JsonOptions);
         Assert.NotNull(grant);
 
+        using var clinicianUpload = new MultipartFormDataContent();
+        var dischargePdf = new ByteArrayContent(
+            "%PDF-1.7 synthetic discharge summary"u8.ToArray());
+        dischargePdf.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        clinicianUpload.Add(dischargePdf, "file", "discharge-summary.pdf");
+        clinicianUpload.Add(new StringContent("Discharge summary"), "category");
+        clinicianUpload.Add(new StringContent("Uploaded by the treating doctor"),
+            "description");
+        var clinicianUploadResponse = await doctorClient.PostAsync(
+            $"/api/v1/doctors/emergency-access/{grant.Id}/documents",
+            clinicianUpload);
+        Assert.Equal(HttpStatusCode.Created, clinicianUploadResponse.StatusCode);
+
         var doctorDocuments = await doctorClient
             .GetFromJsonAsync<MedicalDocumentResponse[]>(
                 $"/api/v1/doctors/emergency-access/{grant.Id}/documents",
                 JsonOptions);
-        Assert.Single(Assert.IsType<MedicalDocumentResponse[]>(doctorDocuments));
+        Assert.Equal(2, Assert.IsType<MedicalDocumentResponse[]>(doctorDocuments).Length);
         var download = await doctorClient.GetAsync(
             $"/api/v1/doctors/emergency-access/{grant.Id}/documents/{document.Id}/content");
         Assert.Equal(HttpStatusCode.OK, download.StatusCode);
@@ -480,6 +497,8 @@ public sealed class ApiIntegrationTests
             "/api/v1/patients/me/emergency-access", JsonOptions);
         Assert.Contains(dashboard!.AuditHistory,
             item => item.Action == AccessAuditAction.MedicalDocumentDownloaded);
+        Assert.Contains(dashboard.AuditHistory,
+            item => item.Action == AccessAuditAction.MedicalDocumentUploaded);
 
         var deleted = await patientClient.DeleteAsync(
             $"/api/v1/patients/me/documents/{document.Id}");

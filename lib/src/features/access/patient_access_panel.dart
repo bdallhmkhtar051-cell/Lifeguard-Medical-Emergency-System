@@ -241,5 +241,8 @@ IconData _auditIcon(String action) => switch (action) {
   'Viewed' => Icons.visibility_outlined,
   'Revoked' => Icons.block_outlined,
   'BreakGlassActivated' => Icons.emergency_outlined,
+  'MedicalDocumentUploaded' => Icons.upload_file_outlined,
+  'MedicalDocumentDownloaded' => Icons.download_outlined,
+  'ClinicalRecordCreated' => Icons.medical_information_outlined,
   _ => Icons.history,
 };

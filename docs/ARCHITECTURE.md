@@ -168,8 +168,9 @@ Administration and clinical care are different responsibilities.
 
 8. **Medical documents**
    - Patients upload and manage PDF, JPEG, and PNG supporting documents.
-   - Doctors receive read-only document access through an active grant.
-   - Successful doctor downloads create server-side audit events.
+   - Doctors can list, upload, and download documents through an active grant,
+     but cannot delete patient documents.
+   - Successful doctor uploads and downloads create server-side audit events.
 
 ## Current data model
 

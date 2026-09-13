@@ -15,10 +15,10 @@ authentication remains required.
 ## Demonstration workflow
 
 1. Run the API and Flutter Web application.
-2. On the login screen, select **Preview biometric sign-in**.
-3. Select **Show failure** to demonstrate the failure state.
-4. Select **Start simulation** to demonstrate scanning and success.
-5. Select **Continue to password** and sign in normally.
+2. On the login screen, select **Use face or fingerprint**.
+3. Choose the visual face scanner or fingerprint sensor.
+4. Tap the scan area or begin button to demonstrate scanning and success.
+5. Select **Continue to password sign-in** and sign in normally.
 
 During a thesis presentation, describe this as a prototype of the intended
 user experience. Do not call it real facial recognition, fingerprint
@@ -39,9 +39,8 @@ opens the dialog, exercises the failure and success states, and confirms that
 the authentication repository received zero login calls and the session stayed
 signed out.
 
-Verification completed on 10 September 2026:
+Original checkpoint verification completed on 10 September 2026. The complete
+suite was rerun after the checkpoint 17 enhancement on 13 September 2026:
 
 - `flutter analyze --no-pub`: no issues found.
-- focused application widget suite: 7 tests passed.
-- complete Flutter suite: 36 tests passed.
-
+- complete Flutter suite: 47 tests passed.

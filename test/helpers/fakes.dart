@@ -395,6 +395,22 @@ class FakeDocumentRepository implements DocumentRepository {
   }
 
   @override
+  Future<MedicalDocument> uploadForDoctor({
+    required String grantId,
+    required List<int> bytes,
+    required String fileName,
+    required String contentType,
+    required String category,
+    String? description,
+  }) => upload(
+    bytes: bytes,
+    fileName: fileName,
+    contentType: contentType,
+    category: category,
+    description: description,
+  );
+
+  @override
   Future<void> delete(String documentId) async {
     documents.removeWhere((item) => item.id == documentId);
   }

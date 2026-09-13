@@ -12,6 +12,14 @@ abstract interface class DocumentRepository {
     required String category,
     String? description,
   });
+  Future<MedicalDocument> uploadForDoctor({
+    required String grantId,
+    required List<int> bytes,
+    required String fileName,
+    required String contentType,
+    required String category,
+    String? description,
+  });
   Future<void> delete(String documentId);
   Future<List<int>> downloadForPatient(String documentId);
   Future<List<int>> downloadForDoctor(String grantId, String documentId);
@@ -41,6 +49,34 @@ class ApiDocumentRepository implements DocumentRepository {
       return MedicalDocument.fromJson(
         (await _api.postMultipart(
           _patientPath,
+          bytes: bytes,
+          fileName: fileName,
+          contentType: contentType,
+          fields: {
+            'category': category,
+            if (description?.trim().isNotEmpty ?? false)
+              'description': description!.trim(),
+          },
+        )).requireObject(),
+      );
+    } on FormatException {
+      throw const ApiException.protocol();
+    }
+  }
+
+  @override
+  Future<MedicalDocument> uploadForDoctor({
+    required String grantId,
+    required List<int> bytes,
+    required String fileName,
+    required String contentType,
+    required String category,
+    String? description,
+  }) async {
+    try {
+      return MedicalDocument.fromJson(
+        (await _api.postMultipart(
+          '/api/v1/doctors/emergency-access/$grantId/documents',
           bytes: bytes,
           fileName: fileName,
           contentType: contentType,

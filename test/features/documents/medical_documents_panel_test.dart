@@ -39,4 +39,26 @@ void main() {
     expect(repository.documents, isEmpty);
     expect(find.text('laboratory-report.pdf'), findsNothing);
   });
+
+  testWidgets('authorized doctor can start a clinical document upload', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MedicalDocumentsPanel(
+            repository: FakeDocumentRepository(),
+            doctorGrantId: 'active-grant',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('doctor-upload-medical-document')),
+      findsOneWidget,
+    );
+    expect(find.text('Upload clinical document'), findsOneWidget);
+  });
 }

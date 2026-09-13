@@ -2,15 +2,18 @@
 
 ## Technical development handover
 
-**Snapshot date:** 12 September 2026
+**Snapshot date:** 13 September 2026
 
 **Repository:** `Lifeguard-Medical-Emergency-System`
 
 **Branch:** `main`
 
-**Base commit:** `80011f1` (`feat: add role-aware workspace navigation`)
+**Version reference:** use `git log -1 --oneline` for the final checkpoint 17
+commit recorded with this handover.
 
-**Working milestone:** checkpoint 16 doctor professional profile
+**Working milestone:** checkpoint 17 visual biometrics, clinician document
+uploads, and visual refresh
+
 **Primary local root:** `C:\Users\hp\Documents\flutter projects\my flutter projects\Emergency system\emergency_system`
 
 This document is the source-of-truth handover for continuing development in a
@@ -40,7 +43,8 @@ information. It allows:
   manage supporting documents;
 - a doctor to open records only through consent, a one-use QR, or an audited
   emergency break-glass grant, then review the emergency snapshot, add a
-  clinical encounter, review documents, and request a guarded AI summary;
+  clinical encounter, review and attach documents, and request a guarded AI
+  summary;
 - an administrator to activate/deactivate accounts and review account and
   emergency-access metadata without receiving clinical-record access.
 
@@ -64,11 +68,13 @@ Implemented end-to-end scope:
 - append-only clinical encounters with optional vital signs and prescription;
 - patient clinical timeline;
 - patient document upload/list/download/soft deletion;
-- grant-controlled doctor document list/download;
+- grant-controlled doctor document list/upload/download with patient-only
+  deletion;
 - temporary, guarded Gemini medical summary;
 - administrator account status and audit dashboard;
-- explicitly labelled biometric sign-in simulation;
-- responsive, role-aware hamburger navigation.
+- explicitly labelled face and fingerprint sign-in simulations;
+- responsive, role-aware hamburger navigation;
+- refreshed role-coloured clinical cards, hierarchy, and Medical ID styling;
 - patient-reported physician, insurance, donor-status, and first-responder
   information shown to patients and authorized doctors.
 
@@ -371,8 +377,8 @@ ID card, QR scanner, and doctor credential/directory have explicit narrow tests.
 - `BrandMark`: login/startup health-and-safety mark.
 - `PatientMedicalIdHeader`: major patient identity card and actions.
 - `ClinicalHistoryPanel`: reusable timeline for patient and doctor views.
-- `MedicalDocumentsPanel`: patient-write or doctor-read-only mode based on
-  `doctorGrantId`.
+- `MedicalDocumentsPanel`: patient management or grant-controlled clinician
+  upload/download mode based on `doctorGrantId`.
 - `MedicalQrDialog`, `MedicalQrScannerDialog`, `ClinicalEncounterDialog`,
   `AiMedicalSummaryDialog`, `BiometricSimulationDialog`.
 - App-private cards, badges, metrics, drawer tiles, and record rows remain
@@ -424,9 +430,9 @@ Status vocabulary:
 
 - **File:** `lib/src/features/auth/biometric_simulation_dialog.dart`
 - **Class:** `BiometricSimulationDialog`
-- **Behavior:** demonstrates ready, scanning, success, failure, and cancel UI.
-  It waits 1.4 seconds to simulate verification and instructs the user to
-  continue with a password.
+- **Behavior:** provides selectable face and fingerprint visualization modes,
+  animated ready/scanning/success/failure states, and then instructs the user
+  to continue with a password. A scan lasts 1.8 seconds.
 - **API:** none.
 - **Security state:** cannot call the authentication repository or create a
   session; collects no face/fingerprint/camera/Windows Hello data.
@@ -443,8 +449,8 @@ Status vocabulary:
 - **API:** no direct endpoint; logout clears local JWT. Child pages call their
   own APIs.
 - **State:** destination initialized from the authenticated single role.
-- **Status:** Finished. This navigation was checkpoint 11; checkpoint 14 is the
-  current latest milestone.
+- **Status:** Finished. This navigation was checkpoint 11 and received the
+  checkpoint 17 visual refresh without changing role permissions.
 
 ### Patient Medical ID portal and overview
 
@@ -543,7 +549,7 @@ Status vocabulary:
   - `GET /api/v1/patients/me/documents/{documentId}/content`
   - `DELETE /api/v1/patients/me/documents/{documentId}`
 - **State/validation:** one panel-wide busy state; supported extensions in the
-  picker; category set; description max 500. Server enforces maximum 5 MB,
+  picker; category set; description max 500. Server enforces maximum 25 MB,
   maximum 25 active documents, extension/MIME/signature agreement, ownership,
   and allowed type.
 - **Status:** Finished for thesis scope, partial for production security.
@@ -556,7 +562,7 @@ Status vocabulary:
 - **Behavior:** concurrently loads all directory patients and the doctor's
   active grants. A row opens an existing authorized EHR or offers break-glass.
   The selected snapshot displays patient emergency data, access type/reason,
-  expiry, clinical history, action buttons, and read-only documents.
+  expiry, clinical history, action buttons, and grant-controlled documents.
 - **API:**
   - `GET /api/v1/doctors/emergency-access`
   - `GET /api/v1/doctors/emergency-access/directory`
@@ -644,13 +650,17 @@ Status vocabulary:
 
 - **Files:** `lib/src/features/documents/medical_documents_panel.dart`,
   `document_repository.dart`, `doctor_access_page.dart`
-- **Behavior:** the shared document panel switches to read-only mode when given
-  `doctorGrantId`; doctor can list/download but cannot upload/delete.
+- **Behavior:** when given `doctorGrantId`, the shared document panel lets the
+  authorized clinician list, upload, and download documents. Delete remains
+  unavailable because document removal is patient-owned.
 - **API:**
   - `GET /api/v1/doctors/emergency-access/{grantId}/documents`
+  - `POST /api/v1/doctors/emergency-access/{grantId}/documents`
   - `GET /api/v1/doctors/emergency-access/{grantId}/documents/{documentId}/content`
-- **State/security:** grant is rechecked by backend; successful doctor download
-  is audited; protected file response is marked `no-store` server-side.
+- **State/security:** the backend rechecks grant ownership and validity for
+  every operation; extension, MIME type, signature, 25 MB size, and active
+  document-count rules apply; successful clinician upload/download is audited;
+  protected file responses are marked `no-store` server-side.
 - **Status:** Finished for prototype scope.
 
 ### Administrator dashboard
@@ -728,10 +738,11 @@ through the exposed API; there is no edit/delete endpoint.
 
 ### Documents
 
-Patient selects allowed file -> metadata dialog -> multipart upload -> backend
-validates ownership/type/size/signature/count -> SQL stores metadata and bytes
--> patient may download or soft-delete -> active-grant doctor may list/download
--> doctor download creates access audit.
+Patient or active-grant clinician selects an allowed file -> metadata dialog ->
+multipart upload -> backend validates role/grant/ownership/type/size/signature/
+count -> SQL stores metadata and bytes with uploader attribution -> patient may
+download or soft-delete -> active-grant clinician may list/upload/download ->
+clinician upload and download create access audits.
 
 ## 8. Backend Dependencies
 
@@ -758,7 +769,7 @@ repository/model will break the stated feature.
 | Encounter creation | POST same doctor clinical path; draft JSON | Saving encounter fails or model parsing fails |
 | AI summary | POST `/api/v1/doctors/emergency-access/{grantId}/ai-summary`; summary/model/disclaimer/timestamp | Summary dialog fails; provider/config errors appear as safe API error |
 | Patient documents | GET/POST `/api/v1/patients/me/documents`; GET `/{id}/content`; DELETE `/{id}` | List/upload/download/delete fails |
-| Doctor documents | GET `.../{grantId}/documents`; GET `.../{grantId}/documents/{id}/content` | Read-only record attachments fail |
+| Doctor documents | GET/POST `.../{grantId}/documents`; GET `.../{grantId}/documents/{id}/content` | Clinician list/upload/download fails |
 | Administration | `/api/v1/admin/users`, user status PUT, account-audit, access-audit | Dashboard load or selected action fails |
 
 Shared contract requirements:
@@ -884,20 +895,22 @@ and other small confirmations/feedback.
 
 ### Last completed full verification
 
-The checkpoint 16 verification completed on 12 September 2026 reported:
+The checkpoint 17 Release verification completed on 13 September 2026
+reported:
 
 - Flutter analyzer: no issues;
-- Flutter tests: **45 passed**;
+- Flutter tests: **47 passed**;
 - backend Application tests: **6 passed**;
 - backend API integration tests: **24 passed**;
 - ASP.NET solution build: zero warnings and zero errors;
 - Flutter Web release build: passed;
 - the latest EF migration was present in local SQL Server.
 
-The final all-in-one Release verification was repeated successfully on 12
-September 2026 through `scripts/verify-all.cmd`. A live Development API startup
-also queried the local SQL Server successfully and returned HTTP 200 from
-`GET /health`. See `docs/FINAL_VERIFICATION_REPORT.md`. Physical camera,
+The final all-in-one Release verification was repeated successfully on 13
+September 2026 through `scripts/verify-all.cmd`. The preceding live Development
+API check on 12 September also queried local SQL Server successfully and
+returned HTTP 200 from `GET /health`. See `docs/FINAL_VERIFICATION_REPORT.md`.
+Physical camera,
 phone-to-laptop QR, browser print, keyboard/screen-reader, and screenshot checks
 remain explicitly pending user-assisted execution.
 
@@ -936,7 +949,7 @@ Feature tests:
 - same-origin QR parsing, patient QR/revoke, short scanner dialog, automatic QR
   redemption after login, and camera workflow through a test seam;
 - clinical timeline contents;
-- patient document metadata/deletion.
+- patient document metadata/deletion and authorized clinician upload action;
 - doctor patient-directory search, authorization filters, result counts, and
   narrow-layout overflow protection.
 - authenticated About LifeGuard navigation and stored emergency-summary view.
@@ -949,7 +962,7 @@ coverage threshold.
 
 ### Backend test inventory
 
-Application validator tests (5):
+Application tests (6):
 
 - valid/invalid emergency profiles, future DOB, primary contacts, collections,
   and E.164 phone;
@@ -963,7 +976,8 @@ API integration tests (24):
 - patient profile save, stale/missing ETag, invalid-save atomicity;
 - grant -> doctor view -> audit -> revoke denial;
 - guarded AI with fake provider;
-- document validation, ownership, doctor grant/download audit, deletion;
+- document validation, ownership, patient and clinician upload, request-size
+  handling, clinician grant/upload/download auditing, and patient deletion;
 - break-glass reason/audit/access and rate limiting;
 - one-use QR grant/audit/revocation/role boundaries;
 - encounter creation/read and denial without active grant;
@@ -1081,7 +1095,7 @@ break-glass access remain the implemented authorization workflows.
 1. Manually inspect the drawer and role isolation in Chrome using patient,
    doctor, and administrator demo accounts.
 2. Complete the phone-to-laptop physical QR scan and camera-permission checks.
-3. Complete manual items M01-M15 in `docs/FINAL_VERIFICATION_REPORT.md`, fill
+3. Complete manual items M01-M16 in `docs/FINAL_VERIFICATION_REPORT.md`, fill
    the evidence register, and capture synthetic-data screenshots.
 4. Update this handover, `README.md`, checkpoint docs, and Chapter 4-6 evidence
     after each genuinely completed milestone.
@@ -1112,7 +1126,7 @@ Recommended reading order for the next AI:
 18. Relevant Infrastructure service and EF configuration/migration
 19. `test/helpers/fakes.dart` and relevant Flutter tests
 20. `backend/tests/EmergencySystem.Api.Tests/ApiIntegrationTests.cs`
-21. `docs/DEVELOPMENT_CHECKPOINT_01.md` through `_16.md`, remembering that later
+21. `docs/DEVELOPMENT_CHECKPOINT_01.md` through `_17.md`, remembering that later
     checkpoints supersede older limitation statements
 22. `docs/ARCHITECTURE.md` and `docs/THESIS_EXECUTION_PLAN.md`
 
@@ -1142,11 +1156,13 @@ route, DTO key, test fake, and endpoint.
 - Gemini AI summary became an implemented guarded server feature. After poor
   output containing Markdown asterisks, the prompt and backend cleanup were
   changed to enforce readable plain text.
-- Medical document upload/list/download/soft-delete and doctor read-only access
-  were added. CORS was updated to allow DELETE so Flutter Web deletion works.
+- Medical document upload/list/download/soft-delete and grant-controlled doctor
+  access were added. Checkpoint 17 then added clinician upload with uploader
+  attribution and audit events. CORS permits DELETE so patient deletion works.
 - The proposed biometric feature was deliberately reduced to an honest UI
-  simulation. It must never be described as real face/fingerprint/passkey
-  authentication.
+  simulation. Checkpoint 17 added distinct animated face and fingerprint
+  visualizations, but they still must never be described as real
+  face/fingerprint/passkey authentication.
 - Checkpoint 11 added the role-aware dark hamburger drawer and synchronized it
   with patient tabs and the doctor scanner.
 - Checkpoint 12 added patient-reported physician, insurance, donor-status, and
@@ -1162,34 +1178,24 @@ route, DTO key, test fake, and endpoint.
   reset controls, and actual user/token-expiry information for every role.
 - Checkpoint 16 added a doctor-only, SQL-backed professional profile with
   explicit self-reported/unverified-licence wording.
-- The correct latest commit is `80011f1`; do not use the earlier mistyped
-  `800codes1` identifier.
+- Commit identifiers from earlier chat messages are historical only; use the
+  repository history for the current checkpoint.
 
 ## 17. Git and workspace state at handover
 
 - Remote: `https://github.com/bdallhmkhtar051-cell/Lifeguard-Medical-Emergency-System.git`
 - Repository is private according to the project setup history; verify access
   in GitHub rather than assuming from the remote URL alone.
-- Use `git log -1 --oneline` for the exact checkpoint 16 commit identifier.
+- Use `git log -1 --oneline` for the exact checkpoint 17 commit identifier.
 - Locally generated thesis PDF/output artifacts were untracked:
   `LifeGuard_Thesis_Handover.pdf` and `output/`. Do not commit them unless the
   user explicitly decides to version generated evidence.
-- This Markdown handover is versioned with checkpoint 16.
+- This Markdown handover is versioned with checkpoint 17.
 
-Recent history before this file:
+Inspect the authoritative recent history with:
 
-```text
-80011f1 feat: add role-aware workspace navigation
-3c96d0c feat: add biometric sign-in simulation
-ff5712e fix: allow document deletion from Flutter web
-c066e1b feat: add secure medical document management
-2695b86 fix: improve AI summary readability
-a45c0a9 feat: add guarded AI medical summaries
-395269c fix: make Medical ID scanner fit short screens
-b0f7ad2 feat: scan Medical ID QR codes with web camera
-c2ad26f feat: add secure administrator account management
-17ad8c1 feat: add secure one-use Medical ID QR access
-02346b2 feat: establish verified LifeGuard system baseline
+```powershell
+git log -12 --oneline
 ```
 
 ## 18. Rules for the Next AI

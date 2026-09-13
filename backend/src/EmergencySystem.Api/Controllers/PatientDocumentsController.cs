@@ -24,7 +24,8 @@ public sealed class PatientDocumentsController(IMedicalDocumentService service)
 
     [HttpPost]
     [Consumes("multipart/form-data")]
-    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+    [RequestSizeLimit(26 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 26 * 1024 * 1024)]
     public async Task<ActionResult<MedicalDocumentResponse>> Upload(
         IFormFile file, [FromForm] string? category, [FromForm] string? description,
         CancellationToken cancellationToken)

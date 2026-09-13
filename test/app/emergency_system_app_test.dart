@@ -84,15 +84,23 @@ void main() {
       find.byKey(const ValueKey('biometric-simulation-dialog')),
       findsOneWidget,
     );
-    expect(find.textContaining('Demonstration only'), findsOneWidget);
+    expect(find.textContaining('Thesis demonstration only'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('simulate-biometric-failure')));
-    await tester.pump(const Duration(milliseconds: 1500));
-    expect(find.text('Simulation could not verify the user'), findsOneWidget);
+    final failureButton = find.byKey(
+      const ValueKey('simulate-biometric-failure'),
+    );
+    await tester.ensureVisible(failureButton);
+    await tester.tap(failureButton);
+    await tester.pump(const Duration(milliseconds: 1900));
+    expect(find.textContaining('No match found'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('start-biometric-simulation')));
-    await tester.pump(const Duration(milliseconds: 1500));
-    expect(find.text('Simulation successful'), findsOneWidget);
+    final startButton = find.byKey(
+      const ValueKey('start-biometric-simulation'),
+    );
+    await tester.ensureVisible(startButton);
+    await tester.tap(startButton);
+    await tester.pump(const Duration(milliseconds: 1900));
+    expect(find.text('Biometric verification successful'), findsOneWidget);
     expect(auth.loginCalls, 0);
     expect(harness.sessionController.status, SessionStatus.signedOut);
   });

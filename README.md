@@ -18,11 +18,11 @@ audit system.
 - **Later client:** a focused Flutter Android/iOS patient application using the
   same API
 
-Sixteen development checkpoints are implemented. A seeded patient can sign in,
+Seventeen development checkpoints are implemented. A seeded patient can sign in,
 maintain an SQL-backed emergency profile, grant a doctor time-limited access,
 revoke it, and inspect the resulting access history. Doctors see only
-authorized snapshots, can append clinical encounters, and every opened
-snapshot is audited.
+authorized snapshots, can append clinical encounters and supporting documents,
+and every opened snapshot is audited.
 
 Implemented at checkpoint 01:
 
@@ -71,9 +71,10 @@ Implemented at checkpoint 09:
 
 - patient upload, listing, download, and soft deletion of PDF, JPEG, and PNG
   medical documents;
-- read-only doctor document access enforced by an active patient access grant;
+- doctor listing, upload, and download enforced by an active patient access
+  grant, while deletion remains patient-only;
 - server validation of file size, extension, MIME type, and binary signature;
-- SQL Server document persistence and audited doctor downloads.
+- SQL Server document persistence and audited doctor uploads/downloads.
 
 Implemented at checkpoint 10:
 
@@ -132,6 +133,18 @@ Implemented at checkpoint 16:
   is not independently verified;
 - server-side length validation, role isolation, and persistence tests.
 
+Implemented at checkpoint 17:
+
+- separate animated face and fingerprint visualizations that remain explicitly
+  labelled, non-authenticating thesis simulations;
+- authorized clinician upload of PDF, JPEG, and PNG documents into the open
+  patient record;
+- clinician-uploader attribution and patient-visible upload audit events;
+- a consistent 25 MB upload limit, including explicit server request limits
+  and a longer bounded multipart-request timeout;
+- a refreshed responsive clinical interface with richer role colours, cards,
+  hierarchy, navigation, and Medical ID presentation.
+
 Real WebAuthn/passkeys and production hardening/deployment are future work.
 
 ## Start here
@@ -149,16 +162,18 @@ Real WebAuthn/passkeys and production hardening/deployment are future work.
 10. Review the [checkpoint 14 presentation utilities](docs/DEVELOPMENT_CHECKPOINT_14.md).
 11. Review the [checkpoint 15 accessibility settings](docs/DEVELOPMENT_CHECKPOINT_15.md).
 12. Review the [checkpoint 16 doctor profile](docs/DEVELOPMENT_CHECKPOINT_16.md).
-13. Follow the [final verification report](docs/FINAL_VERIFICATION_REPORT.md)
+13. Review the [checkpoint 17 visual biometrics and clinician uploads](docs/DEVELOPMENT_CHECKPOINT_17.md).
+14. Review the [visual refresh notes](docs/VISUAL_REFRESH.md).
+15. Follow the [final verification report](docs/FINAL_VERIFICATION_REPORT.md)
     and complete its physical Chrome checks.
-14. Use the [thesis demonstration runbook](docs/THESIS_DEMONSTRATION_RUNBOOK.md)
+16. Use the [thesis demonstration runbook](docs/THESIS_DEMONSTRATION_RUNBOOK.md)
     and [evidence checklist](docs/THESIS_EVIDENCE_CHECKLIST.md).
-15. Review the [recommended architecture](docs/ARCHITECTURE.md).
-16. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
-17. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
-18. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
-   correct medical project-description document.
-19. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
+17. Review the [recommended architecture](docs/ARCHITECTURE.md).
+18. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
+19. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
+20. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
+    correct medical project-description document.
+21. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
    the design for a future real passkey implementation.
 
 ## Run locally

@@ -23,6 +23,25 @@ public sealed class DoctorDocumentsController(IMedicalDocumentService service)
         return documents is null ? NotFound() : Ok(documents);
     }
 
+    [HttpPost]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(26 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 26 * 1024 * 1024)]
+    public async Task<ActionResult<MedicalDocumentResponse>> Upload(
+        Guid grantId, IFormFile file, [FromForm] string? category,
+        [FromForm] string? description, CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var doctorId)) return Unauthorized();
+        await using var stream = file.OpenReadStream();
+        var document = await service.UploadForDoctorAsync(
+            doctorId, grantId, file.FileName, file.ContentType, file.Length,
+            stream, category, description, cancellationToken);
+        return document is null
+            ? NotFound()
+            : CreatedAtAction(nameof(Download),
+                new { grantId, documentId = document.Id }, document);
+    }
+
     [HttpGet("{documentId:guid}/content")]
     public async Task<IActionResult> Download(
         Guid grantId, Guid documentId, CancellationToken cancellationToken)

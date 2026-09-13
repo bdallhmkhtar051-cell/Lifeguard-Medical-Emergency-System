@@ -11,7 +11,7 @@ internal sealed class MedicalDocumentService(
     ApplicationDbContext dbContext,
     TimeProvider timeProvider) : IMedicalDocumentService
 {
-    private const int MaximumBytes = 5 * 1024 * 1024;
+    private const int MaximumBytes = 25 * 1024 * 1024;
     private const int MaximumDocuments = 25;
 
     public async Task<IReadOnlyList<MedicalDocumentResponse>?> GetForPatientAsync(
@@ -26,11 +26,20 @@ internal sealed class MedicalDocumentService(
         Stream content, string? category, string? description,
         CancellationToken cancellationToken = default)
     {
-        var errors = Validate(fileName, contentType, length, category, description);
-        if (errors.Count > 0) throw new RequestValidationException(errors);
         var profileId = await PatientProfileIdAsync(patientUserId, cancellationToken);
         if (profileId is null) return null;
+        return await UploadForProfileAsync(
+            profileId.Value, patientUserId, fileName, contentType, length,
+            content, category, description, cancellationToken);
+    }
 
+    private async Task<MedicalDocumentResponse> UploadForProfileAsync(
+        Guid profileId, Guid uploadedByUserId, string fileName,
+        string contentType, long length, Stream content, string? category,
+        string? description, CancellationToken cancellationToken)
+    {
+        var errors = Validate(fileName, contentType, length, category, description);
+        if (errors.Count > 0) throw new RequestValidationException(errors);
         var count = await dbContext.MedicalDocuments.CountAsync(
             item => item.PatientProfileId == profileId && item.DeletedAtUtc == null,
             cancellationToken);
@@ -52,8 +61,8 @@ internal sealed class MedicalDocumentService(
         var document = new MedicalDocument
         {
             Id = Guid.NewGuid(),
-            PatientProfileId = profileId.Value,
-            UploadedByUserId = patientUserId,
+            PatientProfileId = profileId,
+            UploadedByUserId = uploadedByUserId,
             FileName = Path.GetFileName(fileName).Trim(),
             ContentType = contentType.ToLowerInvariant(),
             Category = Clean(category) ?? "Other",
@@ -102,6 +111,29 @@ internal sealed class MedicalDocumentService(
         var profileId = await ActiveGrantProfileIdAsync(
             doctorUserId, grantId, cancellationToken);
         return profileId is null ? null : await ListAsync(profileId.Value, cancellationToken);
+    }
+
+    public async Task<MedicalDocumentResponse?> UploadForDoctorAsync(
+        Guid doctorUserId, Guid grantId, string fileName, string contentType,
+        long length, Stream content, string? category, string? description,
+        CancellationToken cancellationToken = default)
+    {
+        var profileId = await ActiveGrantProfileIdAsync(
+            doctorUserId, grantId, cancellationToken);
+        if (profileId is null) return null;
+        var document = await UploadForProfileAsync(
+            profileId.Value, doctorUserId, fileName, contentType, length,
+            content, category, description, cancellationToken);
+        dbContext.AccessAuditEvents.Add(new AccessAuditEvent
+        {
+            Id = Guid.NewGuid(),
+            EmergencyAccessGrantId = grantId,
+            ActorUserId = doctorUserId,
+            Action = AccessAuditAction.MedicalDocumentUploaded,
+            OccurredAtUtc = timeProvider.GetUtcNow(),
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return document;
     }
 
     public async Task<MedicalDocumentFile?> DownloadForDoctorAsync(
@@ -175,7 +207,7 @@ internal sealed class MedicalDocumentService(
         if (string.IsNullOrWhiteSpace(safeName) || safeName.Length > 200)
             errors["file"] = ["Choose a file with a name of at most 200 characters."];
         if (length is <= 0 or > MaximumBytes)
-            errors["file"] = ["The document must be between 1 byte and 5 MB."];
+            errors["file"] = ["The document must be between 1 byte and 25 MB."];
         var expectedContentType = extension switch
         {
             ".pdf" => "application/pdf",

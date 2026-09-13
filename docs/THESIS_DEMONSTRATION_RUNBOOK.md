@@ -70,7 +70,8 @@ open the authorized patient. Demonstrate:
 - read-only emergency profile;
 - clinical history;
 - creating a synthetic encounter with vitals/prescription;
-- read-only documents;
+- documents that can be listed and downloaded, plus an authorized clinical
+  document upload while the grant remains active;
 - guarded AI summary and its verification warning.
 
 If practical, scan the phone QR with the laptop camera. Otherwise explain that

@@ -5,9 +5,9 @@ Date: 2026-09-08
 ## Outcome
 
 Patients can upload, view, download, and remove supporting medical documents.
-An authorized doctor can view and download those documents only while the
-patient's access grant is active. Doctor downloads create a patient-visible
-audit event.
+An authorized doctor can view, upload, and download those documents only while
+the patient's access grant is active. Doctor uploads and downloads create
+patient-visible audit events.
 
 This checkpoint gives the thesis a complete file-management workflow that can
 be demonstrated through Flutter, ASP.NET Core, and SQL Server.
@@ -28,11 +28,12 @@ be demonstrated through Flutter, ASP.NET Core, and SQL Server.
 1. The doctor obtains an active consent, QR, or break-glass access grant.
 2. The doctor opens the authorized patient's emergency record.
 3. The patient's active documents appear in the medical-documents panel.
-4. The doctor can download a document but cannot upload, change, or delete it.
-5. Every successful doctor download creates an access-audit event.
+4. The doctor can upload a new clinical document and download existing files,
+   but cannot change or delete the patient's documents.
+5. Every successful doctor upload or download creates an access-audit event.
 
-Expired, revoked, missing, or another doctor's grants cannot list or download
-the patient's documents.
+Expired, revoked, missing, or another doctor's grants cannot list, upload, or
+download the patient's documents.
 
 ## Chapter 4 design evidence
 
@@ -63,6 +64,7 @@ Patient endpoints:
 Doctor endpoints:
 
 - `GET /api/v1/doctors/emergency-access/{grantId}/documents`
+- `POST /api/v1/doctors/emergency-access/{grantId}/documents`
 - `GET /api/v1/doctors/emergency-access/{grantId}/documents/{documentId}/content`
 
 The controllers receive HTTP requests; `MedicalDocumentService` owns the
@@ -72,13 +74,13 @@ and migration `AddMedicalDocuments` creates the SQL Server table.
 ## Security decisions
 
 - Only authenticated patients can manage their own documents.
-- Doctors receive read-only access and must present their own active grant.
-- The maximum file size is 5 MB and each patient may keep 25 active documents.
+- Doctors must present their own active grant to list, upload, or download.
+- The maximum file size is 25 MB and each patient may keep 25 active documents.
 - Only PDF, JPEG, and PNG are accepted.
 - Extension, MIME type, and binary file signature must agree.
 - Uploaded files are not exposed from a public web folder.
 - Deletion is soft deletion and clears the stored binary content.
-- Successful doctor downloads are audited by the server.
+- Successful doctor uploads and downloads are audited by the server.
 - The response uses `no-store` so protected file responses are not deliberately
   cached by the application.
 
@@ -89,22 +91,23 @@ private object reference in SQL Server.
 
 ## Verification evidence for Chapters 5 and 6
 
-- ASP.NET application tests: 5 passed.
-- ASP.NET API integration tests: 23 passed.
-- Flutter tests: 35 passed.
+- ASP.NET application tests: 6 passed.
+- ASP.NET API integration tests: 24 passed.
+- Flutter tests: 47 passed.
 - Flutter analyzer: passed with no issues.
 - SQL Server migration `AddMedicalDocuments`: applied successfully.
 - The integration test proves file validation, patient ownership, grant-based
   doctor access, download content, audit creation, and patient deletion.
-- The widget test proves that the Flutter patient panel lists and removes a
-  document through the repository boundary.
+- Widget tests prove that the Flutter patient panel lists and removes a
+  document and that the authorized clinician panel exposes its upload action.
 
 ## Suggested thesis screenshots
 
 1. Patient **Documents** tab before upload.
 2. File selection and metadata dialog.
 3. Uploaded document card showing category, date, and size.
-4. Doctor record showing the same document in read-only mode.
+4. Doctor record showing the upload action and the same document without a
+   delete action.
 5. Patient access history showing the doctor download audit event.
 6. SQL Server `MedicalDocuments` table with synthetic data only.
 7. Automated test output showing the passing totals.

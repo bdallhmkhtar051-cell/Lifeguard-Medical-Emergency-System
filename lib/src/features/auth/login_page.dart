@@ -270,12 +270,12 @@ class _LoginFormPanel extends StatelessWidget {
               onPressed: busy
                   ? null
                   : () => BiometricSimulationDialog.show(context),
-              icon: const Icon(Icons.face_outlined),
-              label: const Text('Preview biometric sign-in'),
+              icon: const Icon(Icons.face_retouching_natural_outlined),
+              label: const Text('Use face or fingerprint'),
             ),
             const SizedBox(height: 8),
             Text(
-              'Simulation only — password authentication is still required.',
+              'Visual thesis demo — password authentication is still required.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),

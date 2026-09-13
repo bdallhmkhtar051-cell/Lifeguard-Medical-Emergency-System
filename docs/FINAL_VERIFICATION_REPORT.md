@@ -1,7 +1,9 @@
 # LifeGuard final verification report
 
-**Verification date:** 12 September 2026  
-**Source checkpoint:** development checkpoint 16
+**Verification date:** 13 September 2026
+
+**Source checkpoint:** development checkpoint 17
+
 **Scope:** automated Release verification, configuration audit, secret-pattern
 scan, live API startup, local SQL Server connectivity, and health response.
 
@@ -20,7 +22,7 @@ checks are deliberately listed as pending rather than reported as completed.
 | API integration tests | 24 passed | No failures or skipped tests |
 | Flutter dependency restore | Passed | Dependencies resolved successfully |
 | Flutter static analysis | Passed | No issues found |
-| Flutter tests | 45 passed | No failures |
+| Flutter tests | 47 passed | No failures |
 | Flutter Web release build | Passed | `build/web` produced successfully |
 | Live API startup | Passed | Listening on `http://localhost:5080` |
 | Local SQL Server connectivity | Passed | EF Core successfully queried roles, users, and patient profile data |
@@ -47,7 +49,8 @@ analysis and Flutter tests, and creates the Flutter Web release build.
 - access granting, expiry, revocation, audit history and break-glass reason;
 - one-use QR issue/redemption logic and scanner test seam;
 - clinical timeline, encounter data, vital signs and prescriptions;
-- medical-document metadata, access rules and deletion behavior;
+- patient and clinician medical-document upload, metadata, access rules,
+  download auditing, size handling, and patient-only deletion;
 - AI-summary authorization and safe presentation behavior;
 - biometric simulation cannot create a real authenticated session;
 - doctor directory search/filtering and narrow-screen organization;
@@ -77,6 +80,7 @@ dialog, or human inspection and are not marked as passed yet:
 | M13 | Print / Save PDF opens the browser print dialog | Print-preview screenshot |
 | M14 | 390-pixel responsive view at 130% text | Chrome responsive screenshot |
 | M15 | Keyboard-only navigation and screen-reader labels | Signed checklist and observations |
+| M16 | Doctor uploads a synthetic clinical document during active access | Doctor document panel and patient audit screenshots |
 
 ## Known non-blocking observations
 
@@ -94,4 +98,4 @@ dialog, or human inspection and are not marked as passed yet:
 
 **Automated readiness: passed.**  
 **Local API and SQL startup: passed.**  
-**Physical browser evidence: pending user-assisted execution of M01-M15.**
+**Physical browser evidence: pending user-assisted execution of M01-M16.**

@@ -31,6 +31,10 @@ public interface IMedicalDocumentService
     Task<IReadOnlyList<MedicalDocumentResponse>?> GetForDoctorAsync(
         Guid doctorUserId, Guid grantId,
         CancellationToken cancellationToken = default);
+    Task<MedicalDocumentResponse?> UploadForDoctorAsync(
+        Guid doctorUserId, Guid grantId, string fileName, string contentType,
+        long length, Stream content, string? category, string? description,
+        CancellationToken cancellationToken = default);
     Task<MedicalDocumentFile?> DownloadForDoctorAsync(
         Guid doctorUserId, Guid grantId, Guid documentId,
         CancellationToken cancellationToken = default);

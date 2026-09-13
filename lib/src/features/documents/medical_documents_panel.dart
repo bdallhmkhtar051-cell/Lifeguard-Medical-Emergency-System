@@ -52,34 +52,64 @@ class _MedicalDocumentsPanelState extends State<MedicalDocumentsPanel> {
   }
 
   Future<void> _upload() async {
-    final picked = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],
-      withData: true,
-    );
-    final file = picked?.files.singleOrNull;
-    if (file?.bytes == null || !mounted) return;
-    final details = await showDialog<_DocumentDetails>(
-      context: context,
-      builder: (_) => _DocumentDetailsDialog(fileName: file!.name),
-    );
-    if (details == null || !mounted) return;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
     try {
-      final document = await widget.repository.upload(
-        bytes: file!.bytes!,
-        fileName: file.name,
-        contentType: _contentType(file.extension),
-        category: details.category,
-        description: details.description,
+      final picked = await FilePicker.pickFiles(
+        dialogTitle: 'Choose a medical document',
+        type: FileType.custom,
+        allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png'],
+        withData: true,
+        // On Flutter Web the browser window loses focus while the native file
+        // dialog is open. Do not mistake that normal focus change for Cancel.
+        cancelUploadOnWindowBlur: false,
       );
+      final file = picked?.files.singleOrNull;
+      if (file == null || !mounted) return;
+      if (file.bytes == null) {
+        throw const FormatException('The browser could not read this file.');
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        throw const FormatException('Choose a file no larger than 25 MB.');
+      }
+
+      final details = await showDialog<_DocumentDetails>(
+        context: context,
+        builder: (_) => _DocumentDetailsDialog(
+          fileName: file.name,
+          clinicianMode: !_patientMode,
+        ),
+      );
+      if (details == null || !mounted) return;
+      setState(() {
+        _busy = true;
+        _error = null;
+      });
+      final grantId = widget.doctorGrantId;
+      final document = grantId == null
+          ? await widget.repository.upload(
+              bytes: file.bytes!,
+              fileName: file.name,
+              contentType: _contentType(file.extension),
+              category: details.category,
+              description: details.description,
+            )
+          : await widget.repository.uploadForDoctor(
+              grantId: grantId,
+              bytes: file.bytes!,
+              fileName: file.name,
+              contentType: _contentType(file.extension),
+              category: details.category,
+              description: details.description,
+            );
       if (mounted) {
         setState(() => _documents = [document, ...?_documents]);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Medical document uploaded securely.')),
+          SnackBar(
+            content: Text(
+              _patientMode
+                  ? 'Medical document uploaded securely.'
+                  : 'Clinical document attached and audit logged.',
+            ),
+          ),
         );
       }
     } catch (error) {
@@ -176,18 +206,25 @@ class _MedicalDocumentsPanelState extends State<MedicalDocumentsPanel> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Reports, prescriptions and medical images',
+                      'PDF, JPG or PNG • maximum 25 MB',
                       style: TextStyle(color: Color(0xFF64748B)),
                     ),
                   ],
                 ),
-                if (_patientMode)
-                  FilledButton.icon(
-                    key: const ValueKey('upload-medical-document'),
-                    onPressed: _busy ? null : _upload,
-                    icon: const Icon(Icons.upload_file),
-                    label: const Text('Upload document'),
+                FilledButton.icon(
+                  key: ValueKey(
+                    _patientMode
+                        ? 'upload-medical-document'
+                        : 'doctor-upload-medical-document',
                   ),
+                  onPressed: _busy ? null : _upload,
+                  icon: const Icon(Icons.upload_file),
+                  label: Text(
+                    _patientMode
+                        ? 'Upload document'
+                        : 'Upload clinical document',
+                  ),
+                ),
               ],
             ),
             if (_busy) const LinearProgressIndicator(),
@@ -252,14 +289,20 @@ class _DocumentDetails {
 }
 
 class _DocumentDetailsDialog extends StatefulWidget {
-  const _DocumentDetailsDialog({required this.fileName});
+  const _DocumentDetailsDialog({
+    required this.fileName,
+    required this.clinicianMode,
+  });
   final String fileName;
+  final bool clinicianMode;
   @override
   State<_DocumentDetailsDialog> createState() => _DocumentDetailsDialogState();
 }
 
 class _DocumentDetailsDialogState extends State<_DocumentDetailsDialog> {
-  String _category = 'Lab result';
+  late String _category = widget.clinicianMode
+      ? 'Discharge summary'
+      : 'Lab result';
   final _description = TextEditingController();
   @override
   void dispose() {
@@ -269,7 +312,9 @@ class _DocumentDetailsDialogState extends State<_DocumentDetailsDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Document details'),
+    title: Text(
+      widget.clinicianMode ? 'Attach clinical document' : 'Document details',
+    ),
     content: SizedBox(
       width: 460,
       child: Column(
@@ -281,13 +326,23 @@ class _DocumentDetailsDialogState extends State<_DocumentDetailsDialog> {
             initialValue: _category,
             decoration: const InputDecoration(labelText: 'Category'),
             items:
-                const [
-                      'Lab result',
-                      'Prescription',
-                      'Imaging',
-                      'Discharge summary',
-                      'Other',
-                    ]
+                (widget.clinicianMode
+                        ? const [
+                            'Discharge summary',
+                            'Lab report',
+                            'Referral letter',
+                            'Prescription document',
+                            'Medical certificate',
+                            'Imaging',
+                            'Other',
+                          ]
+                        : const [
+                            'Lab result',
+                            'Prescription',
+                            'Imaging',
+                            'Discharge summary',
+                            'Other',
+                          ])
                     .map(
                       (value) =>
                           DropdownMenuItem(value: value, child: Text(value)),
@@ -300,7 +355,7 @@ class _DocumentDetailsDialogState extends State<_DocumentDetailsDialog> {
             controller: _description,
             maxLength: 500,
             decoration: const InputDecoration(
-              labelText: 'Description (optional)',
+              labelText: 'Clinical notes or description (optional)',
             ),
           ),
         ],
@@ -319,7 +374,9 @@ class _DocumentDetailsDialogState extends State<_DocumentDetailsDialog> {
             _description.text.trim().isEmpty ? null : _description.text.trim(),
           ),
         ),
-        child: const Text('Upload securely'),
+        child: Text(
+          widget.clinicianMode ? 'Upload and attach' : 'Upload securely',
+        ),
       ),
     ],
   );
@@ -335,6 +392,15 @@ String _size(int bytes) => bytes >= 1024 * 1024
     ? '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB'
     : '${(bytes / 1024).toStringAsFixed(1)} KB';
 
-String _message(Object error) => error is ApiException
-    ? error.message
-    : 'The document request could not be completed.';
+String _message(Object error) {
+  if (error is ApiException) {
+    final fieldMessage = error.fieldErrors.values
+        .expand((messages) => messages)
+        .firstOrNull;
+    return fieldMessage ?? error.message;
+  }
+  if (error is FormatException && error.message.isNotEmpty) {
+    return error.message;
+  }
+  return 'The browser could not open or upload this file. Try a PDF, JPG, or PNG under 25 MB.';
+}

@@ -108,6 +108,7 @@ class ApiClient {
     required String fileName,
     required String contentType,
     Map<String, String> fields = const {},
+    Duration requestTimeout = const Duration(seconds: 90),
   }) async {
     final request = http.MultipartRequest('POST', _resolve(path));
     request.headers['Accept'] = 'application/json';
@@ -120,7 +121,10 @@ class ApiClient {
         contentType: MediaType.parse(contentType),
       ),
     );
-    final response = await _sendRequest(request);
+    final response = await _sendRequest(
+      request,
+      requestTimeout: requestTimeout,
+    );
     final parsed = _decodeBody(response);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return ApiResponse(
@@ -204,14 +208,18 @@ class ApiClient {
     }
   }
 
-  Future<http.Response> _sendRequest(http.BaseRequest request) async {
+  Future<http.Response> _sendRequest(
+    http.BaseRequest request, {
+    Duration? requestTimeout,
+  }) async {
     final token = _accessToken;
     if (token != null) request.headers['Authorization'] = '$_tokenType $token';
     try {
-      final streamed = await _client.send(request).timeout(timeout);
+      final effectiveTimeout = requestTimeout ?? timeout;
+      final streamed = await _client.send(request).timeout(effectiveTimeout);
       final response = await http.Response.fromStream(
         streamed,
-      ).timeout(timeout);
+      ).timeout(effectiveTimeout);
       if (response.statusCode == 401) {
         final callback = onUnauthorized;
         if (callback != null) Timer.run(callback);
