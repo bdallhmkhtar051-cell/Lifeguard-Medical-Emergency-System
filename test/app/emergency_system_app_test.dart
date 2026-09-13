@@ -173,6 +173,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('drawer-patientAccess')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('patient-access-panel')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('refresh-patient-access')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('authenticated navigation remains usable at mobile width', (
@@ -202,6 +206,7 @@ void main() {
     );
     await tester.pumpWidget(doctorHarness.app);
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('refresh-doctor-data')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('workspace-menu-button')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('drawer-doctorScanQr')), findsOneWidget);

@@ -86,11 +86,25 @@ class _PatientAccessPanelState extends State<PatientAccessPanel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Doctor emergency access',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  'Doctor emergency access',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('refresh-patient-access'),
+                  onPressed: _busy ? null : _load,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Refresh access & audit'),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             const Text(
@@ -144,6 +158,7 @@ class _PatientAccessPanelState extends State<PatientAccessPanel> {
                       isExpanded: true,
                       decoration: const InputDecoration(labelText: 'Duration'),
                       items: const [
+                        DropdownMenuItem(value: 15, child: Text('15 minutes')),
                         DropdownMenuItem(value: 30, child: Text('30 minutes')),
                         DropdownMenuItem(value: 60, child: Text('1 hour')),
                         DropdownMenuItem(value: 240, child: Text('4 hours')),

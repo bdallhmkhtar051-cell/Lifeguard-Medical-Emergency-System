@@ -129,6 +129,15 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
     }
   }
 
+  Future<void> _refresh() async {
+    final selectedAccess = _selectedAccess;
+    if (selectedAccess == null) {
+      await _load();
+    } else {
+      await _open(selectedAccess);
+    }
+  }
+
   Future<void> _open(DoctorAccess access) async {
     setState(() {
       _busy = true;
@@ -305,7 +314,7 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
                   user: widget.user,
                   patientCount: _access?.length ?? 0,
                   busy: _busy,
-                  onRefresh: _load,
+                  onRefresh: _refresh,
                   onScanMedicalQr: _scanMedicalQr,
                 ),
                 if (_error != null)
@@ -446,13 +455,15 @@ class _ClinicianCredential extends StatelessWidget {
                         ),
                       ),
                     ),
-                    IconButton(
-                      tooltip: 'Refresh access',
+                    TextButton.icon(
+                      key: const ValueKey('refresh-doctor-data'),
                       onPressed: busy ? null : onRefresh,
-                      style: IconButton.styleFrom(
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFCCFBF1),
                         backgroundColor: Colors.white10,
                       ),
-                      icon: const Icon(Icons.refresh, color: Color(0xFFCCFBF1)),
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Refresh data'),
                     ),
                   ],
                 ),
