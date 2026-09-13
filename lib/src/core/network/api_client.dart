@@ -79,12 +79,14 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     bool includeAuthorization = true,
+    Duration? requestTimeout,
   }) {
     return _send(
       method: 'POST',
       path: path,
       body: body,
       includeAuthorization: includeAuthorization,
+      requestTimeout: requestTimeout,
     );
   }
 
@@ -149,6 +151,7 @@ class ApiClient {
     Map<String, dynamic>? body,
     Map<String, String> headers = const <String, String>{},
     bool includeAuthorization = true,
+    Duration? requestTimeout,
   }) async {
     final request = http.Request(method, _resolve(path));
     request.headers.addAll(<String, String>{
@@ -165,10 +168,11 @@ class ApiClient {
     }
 
     try {
-      final streamed = await _client.send(request).timeout(timeout);
+      final effectiveTimeout = requestTimeout ?? timeout;
+      final streamed = await _client.send(request).timeout(effectiveTimeout);
       final response = await http.Response.fromStream(
         streamed,
-      ).timeout(timeout);
+      ).timeout(effectiveTimeout);
       final parsed = _decodeBody(response);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return ApiResponse(

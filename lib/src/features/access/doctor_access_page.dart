@@ -200,7 +200,13 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
     try {
       summary = await widget.repository.generateAiSummary(access.id);
     } catch (error) {
-      if (mounted) setState(() => _error = _message(error));
+      if (mounted) {
+        final message = _message(error);
+        setState(() => _error = message);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }

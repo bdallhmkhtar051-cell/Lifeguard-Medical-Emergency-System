@@ -171,6 +171,7 @@ class ApiAccessRepository implements AccessRepository {
       return AiMedicalSummary.fromJson(
         (await _api.postJson(
           '$_doctorPath/$grantId/ai-summary',
+          requestTimeout: const Duration(seconds: 70),
         )).requireObject(),
       );
     } on FormatException {

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -29,7 +30,57 @@ internal sealed class GeminiMedicalSummaryService(
             throw new AiServiceUnavailableException(
                 "The AI summary service has not been configured.");
 
-        using var request = new HttpRequestMessage(
+        try
+        {
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                using var request = CreateRequest(snapshot, clinicalHistory);
+                using var response = await httpClient.SendAsync(request, cancellationToken);
+                if (response.IsSuccessStatusCode)
+                {
+                    using var document = await JsonDocument.ParseAsync(
+                        await response.Content.ReadAsStreamAsync(cancellationToken),
+                        cancellationToken: cancellationToken);
+                    var text = ExtractAnswer(document.RootElement);
+                    if (string.IsNullOrWhiteSpace(text))
+                        throw new AiServiceUnavailableException(
+                            "The AI provider returned an empty summary.");
+
+                    return new(
+                        CleanFormatting(text), timeProvider.GetUtcNow(),
+                        _options.Model, Disclaimer);
+                }
+
+                var transient = response.StatusCode is
+                    HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
+                if (!transient || attempt == 2)
+                    throw new AiServiceUnavailableException(
+                        "The AI provider could not generate a summary. Try again later.");
+
+                // Google recommends exponential backoff for temporary 429/503 responses.
+                await Task.Delay(
+                    TimeSpan.FromMilliseconds(500 * Math.Pow(2, attempt)),
+                    timeProvider,
+                    cancellationToken);
+            }
+
+            throw new AiServiceUnavailableException(
+                "The AI provider could not generate a summary. Try again later.");
+        }
+        catch (AiServiceUnavailableException) { throw; }
+        catch (Exception exception) when (
+            exception is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            throw new AiServiceUnavailableException(
+                "The AI summary service is temporarily unavailable.");
+        }
+    }
+
+    private HttpRequestMessage CreateRequest(
+        DoctorEmergencySnapshotResponse snapshot,
+        IReadOnlyList<ClinicalEncounterResponse> clinicalHistory)
+    {
+        var request = new HttpRequestMessage(
             HttpMethod.Post,
             $"v1beta/models/{Uri.EscapeDataString(_options.Model)}:generateContent");
         request.Headers.Add("x-goog-api-key", _options.ApiKey);
@@ -54,31 +105,7 @@ internal sealed class GeminiMedicalSummaryService(
                 thinkingConfig = new { thinkingLevel = "low" },
             },
         });
-
-        try
-        {
-            using var response = await httpClient.SendAsync(request, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-                throw new AiServiceUnavailableException(
-                    "The AI provider could not generate a summary. Try again later.");
-
-            using var document = await JsonDocument.ParseAsync(
-                await response.Content.ReadAsStreamAsync(cancellationToken),
-                cancellationToken: cancellationToken);
-            var text = ExtractAnswer(document.RootElement);
-            if (string.IsNullOrWhiteSpace(text))
-                throw new AiServiceUnavailableException(
-                    "The AI provider returned an empty summary.");
-
-            return new(CleanFormatting(text), timeProvider.GetUtcNow(), _options.Model, Disclaimer);
-        }
-        catch (AiServiceUnavailableException) { throw; }
-        catch (Exception exception) when (
-            exception is HttpRequestException or TaskCanceledException or JsonException)
-        {
-            throw new AiServiceUnavailableException(
-                "The AI summary service is temporarily unavailable.");
-        }
+        return request;
     }
 
     private const string SystemInstruction =

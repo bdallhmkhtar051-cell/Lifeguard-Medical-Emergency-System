@@ -143,6 +143,31 @@ void main() {
         );
       },
     );
+
+    test(
+      'allows a long-running endpoint to override the default timeout',
+      () async {
+        final client = ApiClient(
+          baseUri: Uri.parse('http://localhost:5080'),
+          client: MockClient((_) async {
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            return http.Response(
+              '{"summary":"ready"}',
+              200,
+              headers: {'content-type': 'application/json'},
+            );
+          }),
+          timeout: const Duration(milliseconds: 1),
+        );
+
+        final response = await client.postJson(
+          '/long-running-summary',
+          requestTimeout: const Duration(milliseconds: 100),
+        );
+
+        expect(response.requireObject()['summary'], 'ready');
+      },
+    );
   });
 }
 
