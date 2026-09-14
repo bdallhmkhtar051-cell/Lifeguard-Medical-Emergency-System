@@ -18,7 +18,7 @@ audit system.
 - **Later client:** a focused Flutter Android/iOS patient application using the
   same API
 
-Seventeen development checkpoints are implemented. A seeded patient can sign in,
+Eighteen development checkpoints are implemented. A seeded patient can sign in,
 maintain an SQL-backed emergency profile, grant a doctor time-limited access,
 revoke it, and inspect the resulting access history. Doctors see only
 authorized snapshots, can append clinical encounters and supporting documents,
@@ -145,6 +145,15 @@ Implemented at checkpoint 17:
 - a refreshed responsive clinical interface with richer role colours, cards,
   hierarchy, navigation, and Medical ID presentation.
 
+Implemented at checkpoint 18:
+
+- a one-time, idempotent enrichment of the fictional Amina Hassan profile;
+- additional synthetic allergies, conditions, medicines, and emergency contact;
+- seven synthetic clinical encounters from 2021 to 2026, including varied
+  observations, dispositions, and prescriptions;
+- historically consistent expired consent grants and audit events supporting
+  each seeded encounter without creating permanent doctor access.
+
 Real WebAuthn/passkeys and production hardening/deployment are future work.
 
 ## Start here
@@ -164,16 +173,17 @@ Real WebAuthn/passkeys and production hardening/deployment are future work.
 12. Review the [checkpoint 16 doctor profile](docs/DEVELOPMENT_CHECKPOINT_16.md).
 13. Review the [checkpoint 17 visual biometrics and clinician uploads](docs/DEVELOPMENT_CHECKPOINT_17.md).
 14. Review the [visual refresh notes](docs/VISUAL_REFRESH.md).
-15. Follow the [final verification report](docs/FINAL_VERIFICATION_REPORT.md)
+15. Review the [checkpoint 18 longitudinal demonstration record](docs/DEVELOPMENT_CHECKPOINT_18.md).
+16. Follow the [final verification report](docs/FINAL_VERIFICATION_REPORT.md)
     and complete its physical Chrome checks.
-16. Use the [thesis demonstration runbook](docs/THESIS_DEMONSTRATION_RUNBOOK.md)
+17. Use the [thesis demonstration runbook](docs/THESIS_DEMONSTRATION_RUNBOOK.md)
     and [evidence checklist](docs/THESIS_EVIDENCE_CHECKLIST.md).
-17. Review the [recommended architecture](docs/ARCHITECTURE.md).
-18. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
-19. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
-20. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
+18. Review the [recommended architecture](docs/ARCHITECTURE.md).
+19. Follow the [dated thesis execution plan](docs/THESIS_EXECUTION_PLAN.md).
+20. Review the [development-environment audit](docs/ENVIRONMENT_SETUP.md).
+21. Read the [source-material audit](docs/PROTOTYPE_AUDIT.md) and supply the
     correct medical project-description document.
-21. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
+22. Keep the [biometrics and AI roadmap](docs/BIOMETRICS_AND_AI_ROADMAP.md) as
    the design for a future real passkey implementation.
 
 ## Run locally

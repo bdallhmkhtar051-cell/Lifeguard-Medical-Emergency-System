@@ -2,17 +2,16 @@
 
 ## Technical development handover
 
-**Snapshot date:** 13 September 2026
+**Snapshot date:** 14 September 2026
 
 **Repository:** `Lifeguard-Medical-Emergency-System`
 
 **Branch:** `main`
 
-**Version reference:** use `git log -1 --oneline` for the final checkpoint 17
+**Version reference:** use `git log -1 --oneline` for the latest checkpoint
 commit recorded with this handover.
 
-**Working milestone:** checkpoint 17 visual biometrics, clinician document
-uploads, and visual refresh
+**Working milestone:** checkpoint 18 longitudinal synthetic patient record
 
 **Primary local root:** `C:\Users\hp\Documents\flutter projects\my flutter projects\Emergency system\emergency_system`
 
@@ -76,7 +75,9 @@ Implemented end-to-end scope:
 - responsive, role-aware hamburger navigation;
 - refreshed role-coloured clinical cards, hierarchy, and Medical ID styling;
 - patient-reported physician, insurance, donor-status, and first-responder
-  information shown to patients and authorized doctors.
+  information shown to patients and authorized doctors;
+- a one-time synthetic longitudinal record containing seven historical
+  encounters from 2021 to 2026 and an expanded emergency overview.
 
 Not implemented:
 
@@ -1126,7 +1127,7 @@ Recommended reading order for the next AI:
 18. Relevant Infrastructure service and EF configuration/migration
 19. `test/helpers/fakes.dart` and relevant Flutter tests
 20. `backend/tests/EmergencySystem.Api.Tests/ApiIntegrationTests.cs`
-21. `docs/DEVELOPMENT_CHECKPOINT_01.md` through `_17.md`, remembering that later
+21. `docs/DEVELOPMENT_CHECKPOINT_01.md` through `_18.md`, remembering that later
     checkpoints supersede older limitation statements
 22. `docs/ARCHITECTURE.md` and `docs/THESIS_EXECUTION_PLAN.md`
 
@@ -1178,6 +1179,10 @@ route, DTO key, test fake, and endpoint.
   reset controls, and actual user/token-expiry information for every role.
 - Checkpoint 16 added a doctor-only, SQL-backed professional profile with
   explicit self-reported/unverified-licence wording.
+- Checkpoint 17 added clinician document upload, separate visual face and
+  fingerprint simulations, and the responsive visual refresh.
+- Checkpoint 18 expanded only the fictional Development patient with an
+  idempotent multi-year clinical history and richer emergency overview.
 - Commit identifiers from earlier chat messages are historical only; use the
   repository history for the current checkpoint.
 
@@ -1186,11 +1191,11 @@ route, DTO key, test fake, and endpoint.
 - Remote: `https://github.com/bdallhmkhtar051-cell/Lifeguard-Medical-Emergency-System.git`
 - Repository is private according to the project setup history; verify access
   in GitHub rather than assuming from the remote URL alone.
-- Use `git log -1 --oneline` for the exact checkpoint 17 commit identifier.
+- Use `git log -1 --oneline` for the exact latest checkpoint identifier.
 - Locally generated thesis PDF/output artifacts were untracked:
   `LifeGuard_Thesis_Handover.pdf` and `output/`. Do not commit them unless the
   user explicitly decides to version generated evidence.
-- This Markdown handover is versioned with checkpoint 17.
+- This Markdown handover is versioned with checkpoint 18.
 
 Inspect the authoritative recent history with:
 
