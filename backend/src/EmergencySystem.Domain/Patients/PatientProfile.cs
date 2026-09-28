@@ -10,6 +10,12 @@ public sealed class PatientProfile
 
     public Guid UserId { get; set; }
 
+    /// <summary>
+    /// Stable, opaque identifier encoded in the patient's permanent emergency
+    /// QR. It identifies the patient but never authorizes record access.
+    /// </summary>
+    public Guid EmergencyMedicalId { get; set; }
+
     public string FullName { get; set; } = string.Empty;
 
     public DateOnly DateOfBirth { get; set; }

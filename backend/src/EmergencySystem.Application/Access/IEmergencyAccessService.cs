@@ -24,6 +24,18 @@ public interface IEmergencyAccessService
         Guid patientUserId,
         CancellationToken cancellationToken = default);
 
+    Task<EmergencyMedicalIdResponse?> GetEmergencyMedicalIdAsync(
+        Guid patientUserId,
+        CancellationToken cancellationToken = default);
+
+    Task<EmergencyMedicalIdResponse?> RotateEmergencyMedicalIdAsync(
+        Guid patientUserId,
+        CancellationToken cancellationToken = default);
+
+    Task<EmergencyPatientIdentificationResponse?> ResolveEmergencyMedicalIdAsync(
+        ResolveEmergencyMedicalIdRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<DoctorAccessResponse>> GetDoctorAccessAsync(
         Guid doctorUserId,
         CancellationToken cancellationToken = default);

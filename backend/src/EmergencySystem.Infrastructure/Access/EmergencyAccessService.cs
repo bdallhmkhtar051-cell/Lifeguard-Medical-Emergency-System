@@ -201,6 +201,56 @@ internal sealed class EmergencyAccessService(
         return true;
     }
 
+    public async Task<EmergencyMedicalIdResponse?> GetEmergencyMedicalIdAsync(
+        Guid patientUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var identifier = await dbContext.PatientProfiles.AsNoTracking()
+            .Where(item => item.UserId == patientUserId)
+            .Select(item => (Guid?)item.EmergencyMedicalId)
+            .SingleOrDefaultAsync(cancellationToken);
+        return identifier is null
+            ? null
+            : MapEmergencyMedicalId(identifier.Value);
+    }
+
+    public async Task<EmergencyMedicalIdResponse?> RotateEmergencyMedicalIdAsync(
+        Guid patientUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = await dbContext.PatientProfiles.SingleOrDefaultAsync(
+            item => item.UserId == patientUserId,
+            cancellationToken);
+        if (profile is null) return null;
+
+        // Reissuing the identifier invalidates every printed copy of the old
+        // emergency QR without changing the patient's medical profile ID.
+        profile.EmergencyMedicalId = Guid.NewGuid();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return MapEmergencyMedicalId(profile.EmergencyMedicalId);
+    }
+
+    public async Task<EmergencyPatientIdentificationResponse?> ResolveEmergencyMedicalIdAsync(
+        ResolveEmergencyMedicalIdRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!PermanentEmergencyQrPayload.TryParse(
+                request.QrPayload,
+                out var emergencyMedicalId))
+        {
+            return null;
+        }
+
+        // Identification is intentionally separate from authorization. Do not
+        // add clinical, contact, birth-date, or insurance fields here.
+        return await dbContext.PatientProfiles.AsNoTracking()
+            .Where(item => item.EmergencyMedicalId == emergencyMedicalId)
+            .Select(item => new EmergencyPatientIdentificationResponse(
+                item.Id,
+                item.FullName))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<DoctorAccessResponse>> GetDoctorAccessAsync(
         Guid doctorUserId,
         CancellationToken cancellationToken = default)
@@ -393,12 +443,31 @@ internal sealed class EmergencyAccessService(
         dbContext.AccessAuditEvents.Add(
             NewAudit(grant.Id, doctorUserId, AccessAuditAction.Viewed, now));
         await dbContext.SaveChangesAsync(cancellationToken);
+        var profile = EmergencyProfileMapper.Map(grant.PatientProfile).Profile;
+        if (grant.AccessType == EmergencyAccessType.BreakGlass)
+        {
+            // Break-glass follows minimum-necessary disclosure. It returns the
+            // emergency facts needed for immediate care, not coordination or
+            // insurance information, and exposes only the primary ICE contact.
+            profile = profile with
+            {
+                PrimaryPhysicianName = null,
+                PrimaryPhysicianPhone = null,
+                InsuranceProvider = null,
+                InsurancePolicyNumber = null,
+                EmergencyContacts = profile.EmergencyContacts
+                    .Where(item => item.IsPrimary)
+                    .Take(1)
+                    .ToArray(),
+            };
+        }
+
         return new DoctorEmergencySnapshotResponse(
             grant.Id,
             grant.ExpiresAtUtc,
             grant.AccessType,
             grant.EmergencyReason,
-            EmergencyProfileMapper.Map(grant.PatientProfile).Profile);
+            profile);
     }
 
     private async Task<Dictionary<Guid, string>> UserNamesAsync(
@@ -444,4 +513,7 @@ internal sealed class EmergencyAccessService(
 
     private static string HashQrToken(string token) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+
+    private static EmergencyMedicalIdResponse MapEmergencyMedicalId(Guid identifier) =>
+        new(identifier, PermanentEmergencyQrPayload.Create(identifier));
 }

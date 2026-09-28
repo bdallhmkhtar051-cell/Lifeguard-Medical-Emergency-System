@@ -7,10 +7,11 @@ the proposed biometric sign-in experience. It is a user-interface simulation,
 not biometric authentication.
 
 The simulation includes ready, scanning, successful, failed, and cancelled
-states. It does not access the camera, Windows Hello, a fingerprint reader, or
-any biometric information. A successful animation does not create a user
-session and does not call the authentication API. Normal email and password
-authentication remains required.
+states. Checkpoint 19 later added a live front-camera preview to the face mode,
+but it still performs no face matching and stores no image or video. It does
+not access Windows Hello, a fingerprint reader, or biometric information. A
+successful animation does not create a user session or call the authentication
+API. Normal email and password authentication remains required.
 
 ## Demonstration workflow
 
@@ -26,7 +27,9 @@ authentication, Windows Hello integration, or a completed passkey feature.
 
 ## Security boundary
 
-- No face image, fingerprint, template, or camera stream is collected.
+- The face mode displays a temporary local camera stream, but the application
+  does not capture, upload, analyze, or store frames from it.
+- No face template, fingerprint, or biometric measurement is collected.
 - No network request is made by the simulation.
 - No JWT is issued and no authenticated route is opened.
 - Password authentication continues to enforce the existing server-side roles.

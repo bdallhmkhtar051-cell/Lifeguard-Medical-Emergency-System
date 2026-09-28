@@ -28,6 +28,7 @@ class DoctorAccessPage extends StatefulWidget {
     this.scannerExpectedBaseUri,
     this.documentRepository,
     this.navigationController,
+    this.accessRevalidationInterval = const Duration(seconds: 5),
     super.key,
   });
 
@@ -39,6 +40,7 @@ class DoctorAccessPage extends StatefulWidget {
   final Uri? scannerExpectedBaseUri;
   final DocumentRepository? documentRepository;
   final WorkspaceNavigationController? navigationController;
+  final Duration accessRevalidationInterval;
 
   @override
   State<DoctorAccessPage> createState() => _DoctorAccessPageState();
@@ -55,6 +57,8 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
   DoctorAccess? _selectedAccess;
   String? _error;
   bool _busy = true;
+  bool _revalidatingAccess = false;
+  Timer? _accessRevalidationTimer;
 
   @override
   void initState() {
@@ -65,6 +69,7 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
 
   @override
   void dispose() {
+    _accessRevalidationTimer?.cancel();
     _navigation.removeListener(_handleNavigation);
     if (widget.navigationController == null) _navigation.dispose();
     super.dispose();
@@ -74,9 +79,7 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
     switch (_navigation.destination) {
       case WorkspaceDestination.doctorPatients:
         setState(() {
-          _snapshot = null;
-          _selectedAccess = null;
-          _clinicalRecords = const [];
+          _clearOpenedRecord();
         });
         break;
       case WorkspaceDestination.doctorScanQr:
@@ -144,22 +147,103 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
       _error = null;
     });
     try {
-      final results = await Future.wait<Object>([
-        widget.repository.doctorSnapshot(access.id),
-        widget.clinicalRepository.doctorHistory(access.id),
-      ]);
+      final snapshot = await widget.repository.doctorSnapshot(access.id);
+      // Break-glass is intentionally a minimum-necessary emergency view. Full
+      // history is requested only for patient-consented access.
+      final clinicalRecords = snapshot.accessType == EmergencyAccessKind.breakGlass
+          ? const <ClinicalEncounter>[]
+          : await widget.clinicalRepository.doctorHistory(access.id);
       if (mounted) {
         setState(() {
-          _snapshot = results[0] as DoctorSnapshot;
-          _clinicalRecords = results[1] as List<ClinicalEncounter>;
+          _snapshot = snapshot;
+          _clinicalRecords = clinicalRecords;
           _selectedAccess = access;
         });
+        _scheduleAccessRevalidation();
       }
     } catch (error) {
-      if (mounted) setState(() => _error = _message(error));
+      if (mounted) {
+        if (_accessEnded(error)) {
+          setState(() {
+            _clearOpenedRecord();
+            _error = null;
+          });
+          _showAccessEndedMessage();
+          await _load();
+        } else {
+          setState(() => _error = _message(error));
+        }
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _scheduleAccessRevalidation() {
+    _accessRevalidationTimer?.cancel();
+    _accessRevalidationTimer = Timer.periodic(
+      widget.accessRevalidationInterval,
+      (_) => unawaited(_revalidateOpenedAccess()),
+    );
+  }
+
+  Future<void> _revalidateOpenedAccess() async {
+    final selected = _selectedAccess;
+    if (selected == null || _revalidatingAccess || _busy) return;
+    if (!selected.expiresAt.toUtc().isAfter(DateTime.now().toUtc())) {
+      setState(() {
+        _clearOpenedRecord();
+        _error = null;
+      });
+      _showAccessEndedMessage();
+      return;
+    }
+    _revalidatingAccess = true;
+    try {
+      final activeAccess = await widget.repository.doctorAccess();
+      if (!mounted || _selectedAccess?.id != selected.id) return;
+      final stillActive = activeAccess
+          .where((item) => item.id == selected.id)
+          .firstOrNull;
+      if (stillActive == null) {
+        setState(() {
+          _access = activeAccess;
+          _clearOpenedRecord();
+          _error = null;
+        });
+        _showAccessEndedMessage();
+      } else {
+        setState(() {
+          _access = activeAccess;
+          _selectedAccess = stillActive;
+        });
+      }
+    } catch (_) {
+      // A temporary network failure must not be mistaken for revocation.
+      // Protected API actions continue to enforce access server-side.
+    } finally {
+      _revalidatingAccess = false;
+    }
+  }
+
+  void _clearOpenedRecord() {
+    _accessRevalidationTimer?.cancel();
+    _accessRevalidationTimer = null;
+    _snapshot = null;
+    _selectedAccess = null;
+    _clinicalRecords = const [];
+  }
+
+  void _showAccessEndedMessage() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Access was revoked or expired. The patient record has been closed.',
+          ),
+        ),
+      );
   }
 
   Future<void> _createEncounter() async {
@@ -283,8 +367,46 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
     }
   }
 
+  Future<void> _identifyEmergencyPatient(String qrPayload) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    EmergencyPatientIdentification? identification;
+    try {
+      identification = await widget.repository.identifyEmergencyPatient(
+        qrPayload,
+      );
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = error is ApiException && error.statusCode == 404
+              ? 'This permanent emergency QR is invalid or no longer active.'
+              : _message(error);
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+
+    if (identification == null || !mounted) return;
+    final useBreakGlass = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _EmergencyIdentityDialog(identification: identification!),
+    );
+    if (useBreakGlass == true && mounted) {
+      await _breakGlass(
+        DoctorPatient(
+          id: identification.patientProfileId,
+          name: identification.patientName,
+        ),
+      );
+    }
+  }
+
   Future<void> _scanMedicalQr() async {
-    final token = await showDialog<String>(
+    final result = await showDialog<MedicalQrScanResult>(
       context: context,
       barrierDismissible: false,
       builder: (_) => MedicalQrScannerDialog(
@@ -292,7 +414,13 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
         expectedBaseUri: widget.scannerExpectedBaseUri,
       ),
     );
-    if (token != null && mounted) await _redeemMedicalQr(token);
+    if (result == null || !mounted) return;
+    switch (result.kind) {
+      case MedicalQrScanKind.temporaryConsent:
+        await _redeemMedicalQr(result.value);
+      case MedicalQrScanKind.permanentEmergency:
+        await _identifyEmergencyPatient(result.value);
+    }
   }
 
   @override
@@ -333,9 +461,7 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
                     alignment: Alignment.centerLeft,
                     child: OutlinedButton.icon(
                       onPressed: () => setState(() {
-                        _snapshot = null;
-                        _selectedAccess = null;
-                        _clinicalRecords = const [];
+                        _clearOpenedRecord();
                       }),
                       icon: const Icon(Icons.arrow_back, size: 18),
                       label: const Text('Authorized patients'),
@@ -349,10 +475,11 @@ class _DoctorAccessPageState extends State<DoctorAccessPage> {
                     onCreateEncounter: _createEncounter,
                     onGenerateAiSummary: _generateAiSummary,
                   ),
-                  if (widget.documentRepository case final repository?) ...[
+                  if (snapshot.accessType != EmergencyAccessKind.breakGlass &&
+                      widget.documentRepository != null) ...[
                     const SizedBox(height: 18),
                     MedicalDocumentsPanel(
-                      repository: repository,
+                      repository: widget.documentRepository!,
                       doctorGrantId: _selectedAccess!.id,
                     ),
                   ],
@@ -609,7 +736,7 @@ class _ClinicianCredential extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     const Text(
-                      'Scan the patient’s current one-use code. Camera images stay on this device.',
+                      'Scan a temporary consent QR or permanent emergency ID. Camera images stay on this device.',
                       style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                     ),
                     FilledButton.icon(
@@ -672,6 +799,106 @@ class _Metric extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Confirmation boundary between patient identification and authorization.
+/// No clinical data is loaded until the doctor completes break-glass.
+class _EmergencyIdentityDialog extends StatelessWidget {
+  const _EmergencyIdentityDialog({required this.identification});
+
+  final EmergencyPatientIdentification identification;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Row(
+        children: [
+          Icon(Icons.lock_outline, color: Color(0xFFB45309)),
+          SizedBox(width: 10),
+          Expanded(child: Text('Emergency patient identified')),
+        ],
+      ),
+      content: SizedBox(
+        width: 440,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: Column(
+                children: [
+                  const CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Color(0xFFFFEDD5),
+                    child: Icon(
+                      Icons.person_search_outlined,
+                      color: Color(0xFFC2410C),
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    identification.patientName,
+                    key: const ValueKey('identified-emergency-patient-name'),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'IDENTITY MATCHED • RECORD LOCKED',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFFB45309),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: .7,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'The permanent QR identified this patient only. No medical information has been opened and no access grant has been created.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'For a genuine emergency, continue to break-glass and provide a specific reason. Access will be time-limited and audited.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF9A3412),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          key: const ValueKey('continue-emergency-break-glass'),
+          onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFB91C1C),
+          ),
+          icon: const Icon(Icons.emergency_outlined),
+          label: const Text('Continue to break-glass'),
+        ),
+      ],
     );
   }
 }
@@ -1072,6 +1299,7 @@ class _ClinicalSnapshot extends StatelessWidget {
     final profile = snapshot.profile;
     final breakGlass = snapshot.accessType == EmergencyAccessKind.breakGlass;
     return Column(
+      key: const ValueKey('doctor-clinical-snapshot'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Card(
@@ -1086,9 +1314,11 @@ class _ClinicalSnapshot extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'ACTIVE SELECTED PATIENT EHR',
-                      style: TextStyle(
+                    Text(
+                      breakGlass
+                          ? 'ACTIVE EMERGENCY SUMMARY'
+                          : 'ACTIVE SELECTED PATIENT EHR',
+                      style: const TextStyle(
                         color: Color(0xFF64748B),
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
@@ -1139,7 +1369,9 @@ class _ClinicalSnapshot extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    '${_accessLabel(snapshot.accessType)} • PROFILE READ ONLY • DOCUMENTATION ENABLED • ${_time(snapshot.expiresAt)}',
+                    '${_accessLabel(snapshot.accessType)} • '
+                    '${breakGlass ? 'MINIMUM NECESSARY VIEW' : 'PROFILE READ ONLY • DOCUMENTATION ENABLED'} • '
+                    '${_time(snapshot.expiresAt)}',
                     style: TextStyle(
                       color: breakGlass
                           ? const Color(0xFF991B1B)
@@ -1175,51 +1407,142 @@ class _ClinicalSnapshot extends StatelessWidget {
         const SizedBox(height: 14),
         _EmergencyBar(profile: profile),
         const SizedBox(height: 18),
-        _SnapshotGrid(profile: profile),
-        const SizedBox(height: 18),
-        Card(
-          color: const Color(0xFFF8FAFC),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 12,
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'CLINICAL TOOLS',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: .8,
+        if (breakGlass)
+          _BreakGlassEmergencySummary(profile: profile)
+        else ...[
+          _SnapshotGrid(profile: profile),
+          const SizedBox(height: 18),
+          Card(
+            color: const Color(0xFFF8FAFC),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 12,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CLINICAL TOOLS',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: .8,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'AI summaries are temporary decision support and must be verified by the clinician.',
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
-                    ),
-                  ],
-                ),
-                OutlinedButton.icon(
-                  key: const ValueKey('generate-ai-summary'),
-                  onPressed: busy ? null : onGenerateAiSummary,
-                  icon: const Icon(Icons.auto_awesome, size: 18),
-                  label: const Text('Generate AI summary'),
-                ),
-              ],
+                      SizedBox(height: 4),
+                      Text(
+                        'AI summaries are temporary decision support and must be verified by the clinician.',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                  OutlinedButton.icon(
+                    key: const ValueKey('generate-ai-summary'),
+                    onPressed: busy ? null : onGenerateAiSummary,
+                    icon: const Icon(Icons.auto_awesome, size: 18),
+                    label: const Text('Generate AI summary'),
+                  ),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 12),
+          ClinicalHistoryPanel(
+            records: clinicalRecords,
+            busy: busy,
+            onCreate: onCreateEncounter,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// A deliberately short minimum-necessary view for emergency override access.
+class _BreakGlassEmergencySummary extends StatelessWidget {
+  const _BreakGlassEmergencySummary({required this.profile});
+
+  final EmergencyProfile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final responderFacts = <String>[
+      'Donor status: ${organDonorStatusLabels[profile.organDonorStatus] ?? profile.organDonorStatus}',
+      if (profile.firstResponderNotes.isNotEmpty)
+        'Patient-reported notes: ${profile.firstResponderNotes}',
+    ];
+    final sections = <Widget>[
+      _SnapshotSection(
+        title: 'Active medications',
+        icon: Icons.medication_outlined,
+        color: const Color(0xFF1D4ED8),
+        values: profile.medications.map(
+          (item) => '${item.name} ${item.dosage} • ${item.frequency}',
         ),
-        const SizedBox(height: 12),
-        ClinicalHistoryPanel(
-          records: clinicalRecords,
-          busy: busy,
-          onCreate: onCreateEncounter,
+      ),
+      _SnapshotSection(
+        title: 'Critical conditions',
+        icon: Icons.monitor_heart_outlined,
+        color: const Color(0xFF4338CA),
+        values: profile.medicalConditions.map((item) => item.name),
+      ),
+      _SnapshotSection(
+        title: 'First-responder notes',
+        icon: Icons.emergency_outlined,
+        color: const Color(0xFFB45309),
+        values: responderFacts,
+      ),
+    ];
+
+    return Column(
+      key: const ValueKey('break-glass-emergency-summary'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF7ED),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFFDBA74)),
+          ),
+          child: const Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.shield_outlined, color: Color(0xFF9A3412)),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Emergency-only view: only the minimum information needed for immediate care is shown. Clinical history, documents, insurance and AI tools remain locked.',
+                  style: TextStyle(
+                    color: Color(0xFF9A3412),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth >= 760
+                ? (constraints.maxWidth - 20) / 2
+                : constraints.maxWidth;
+            return Wrap(
+              spacing: 20,
+              runSpacing: 20,
+              children: sections
+                  .map((section) => SizedBox(width: width, child: section))
+                  .toList(),
+            );
+          },
         ),
       ],
     );
@@ -1537,6 +1860,10 @@ String _initials(String name) => name
 String _message(Object error) => error is ApiException
     ? error.message
     : 'Emergency access could not be loaded.';
+
+bool _accessEnded(Object error) =>
+    error is ApiException &&
+    (error.statusCode == 403 || error.statusCode == 404);
 
 String _accessLabel(EmergencyAccessKind kind) => switch (kind) {
   EmergencyAccessKind.consented => 'CONSENTED',

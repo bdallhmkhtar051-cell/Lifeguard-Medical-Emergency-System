@@ -177,41 +177,52 @@ class _PatientAccessPanelState extends State<PatientAccessPanel> {
                 ],
               ),
               const SizedBox(height: 20),
-              Text(
-                'Access grants',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              if (data.grants.isEmpty)
-                const Text('No access has been granted.')
-              else
-                for (final grant in data.grants)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      grant.active ? Icons.lock_open : Icons.lock_outline,
-                    ),
-                    title: Text(grant.doctorName),
-                    subtitle: Text(
-                      '${switch (grant.accessType) {
-                        EmergencyAccessKind.breakGlass => 'Emergency override',
-                        EmergencyAccessKind.qrConsented => 'Medical ID QR consent',
-                        EmergencyAccessKind.consented => 'Patient consent',
-                      }} • '
-                      '${grant.active ? 'Active until' : 'Inactive'} ${_time(grant.expiresAt)}'
-                      '${grant.emergencyReason == null ? '' : '\nReason: ${grant.emergencyReason}'}',
-                    ),
-                    trailing: grant.active
-                        ? OutlinedButton(
-                            onPressed: _busy ? null : () => _revoke(grant.id),
-                            child: const Text('Revoke'),
-                          )
-                        : null,
-                  ),
               ExpansionTile(
+                key: const ValueKey('patient-access-grants-section'),
                 tilePadding: EdgeInsets.zero,
+                leading: const Icon(Icons.key_outlined),
+                title: const Text('Access grants'),
+                subtitle: Text(
+                  '${data.grants.where((grant) => grant.active).length} active • '
+                  '${data.grants.length} total',
+                ),
+                children: [
+                  if (data.grants.isEmpty)
+                    const Text('No access has been granted.')
+                  else
+                    for (final grant in data.grants)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          grant.active ? Icons.lock_open : Icons.lock_outline,
+                        ),
+                        title: Text(grant.doctorName),
+                        subtitle: Text(
+                          '${switch (grant.accessType) {
+                            EmergencyAccessKind.breakGlass => 'Emergency override',
+                            EmergencyAccessKind.qrConsented => 'Medical ID QR consent',
+                            EmergencyAccessKind.consented => 'Patient consent',
+                          }} • '
+                          '${grant.active ? 'Active until' : 'Inactive'} ${_time(grant.expiresAt)}'
+                          '${grant.emergencyReason == null ? '' : '\nReason: ${grant.emergencyReason}'}',
+                        ),
+                        trailing: grant.active
+                            ? OutlinedButton(
+                                onPressed: _busy
+                                    ? null
+                                    : () => _revoke(grant.id),
+                                child: const Text('Revoke'),
+                              )
+                            : null,
+                      ),
+                ],
+              ),
+              ExpansionTile(
+                key: const ValueKey('patient-access-history-section'),
+                tilePadding: EdgeInsets.zero,
+                leading: const Icon(Icons.history),
                 title: const Text('Access history'),
+                subtitle: Text('${data.audit.length} recorded events'),
                 children: data.audit.isEmpty
                     ? const [ListTile(title: Text('No access activity yet.'))]
                     : data.audit

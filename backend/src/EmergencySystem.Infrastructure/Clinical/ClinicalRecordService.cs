@@ -117,7 +117,11 @@ internal sealed class ClinicalRecordService(
                         item.DoctorUserId == doctorUserId &&
                         item.RevokedAtUtc == null,
                 cancellationToken);
-        return grant is not null && grant.ExpiresAtUtc > timeProvider.GetUtcNow()
+        // Break-glass exposes only the concise emergency snapshot. Historical
+        // encounters and clinical-record creation require patient consent.
+        return grant is not null &&
+               grant.AccessType != EmergencyAccessType.BreakGlass &&
+               grant.ExpiresAtUtc > timeProvider.GetUtcNow()
             ? grant
             : null;
     }

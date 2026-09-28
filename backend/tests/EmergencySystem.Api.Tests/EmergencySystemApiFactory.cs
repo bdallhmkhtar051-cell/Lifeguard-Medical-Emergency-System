@@ -113,6 +113,7 @@ internal sealed class EmergencySystemApiFactory : WebApplicationFactory<Program>
         {
             Id = Guid.NewGuid(),
             UserId = patient.Id,
+            EmergencyMedicalId = Guid.Parse("41f0d2e4-b27d-4a30-927d-84676fe72311"),
             FullName = "Test Patient",
             DateOfBirth = new DateOnly(1997, 4, 12),
             BloodGroup = BloodGroup.OPositive,

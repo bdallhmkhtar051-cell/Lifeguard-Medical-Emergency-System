@@ -173,7 +173,10 @@ internal sealed class MedicalDocumentService(
                            item.DoctorUserId == doctorUserId &&
                            item.RevokedAtUtc == null)
             .SingleOrDefaultAsync(cancellationToken);
-        return grant is not null && grant.ExpiresAtUtc > timeProvider.GetUtcNow()
+        // Documents are outside the minimum-necessary break-glass view.
+        return grant is not null &&
+               grant.AccessType != EmergencyAccessType.BreakGlass &&
+               grant.ExpiresAtUtc > timeProvider.GetUtcNow()
             ? grant.PatientProfileId
             : null;
     }

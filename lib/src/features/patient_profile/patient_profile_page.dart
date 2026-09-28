@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/widgets/async_error_panel.dart';
 import '../access/access_repository.dart';
 import '../access/medical_qr_dialog.dart';
+import '../access/permanent_emergency_qr_dialog.dart';
 import '../access/patient_access_panel.dart';
 import '../clinical/clinical_history_panel.dart';
 import '../clinical/clinical_repository.dart';
@@ -185,6 +186,13 @@ class _PatientPortalState extends State<_PatientPortal> {
                 barrierDismissible: false,
                 builder: (_) =>
                     MedicalQrDialog(repository: widget.accessRepository),
+              ),
+              onDisplayEmergencyQr: () => showDialog<void>(
+                context: context,
+                builder: (_) => PermanentEmergencyQrDialog(
+                  repository: widget.accessRepository,
+                  patientName: widget.profile.fullName,
+                ),
               ),
             ),
             if (widget.warning != null) ...[

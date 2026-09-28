@@ -65,6 +65,8 @@ public sealed class DoctorAccessController(
         if (!User.TryGetUserId(out var doctorId)) return Unauthorized();
         var snapshot = await accessService.GetDoctorSnapshotAsync(
             doctorId, grantId, cancellationToken);
+        if (snapshot?.AccessType == EmergencySystem.Domain.Access.EmergencyAccessType.BreakGlass)
+            return Forbid();
         var history = await clinicalRecordService.GetForDoctorAsync(
             doctorId, grantId, cancellationToken);
         if (snapshot is null || history is null) return NotFound();

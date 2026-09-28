@@ -1,0 +1,25 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260922122021
+Username: DESKTOP-SM70BP5\CodexSandboxOffline
+RunAs User: DESKTOP-SM70BP5\CodexSandboxOffline
+Configuration Name: 
+Machine: DESKTOP-SM70BP5 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -Command try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}
+Start-Transcript -Path 'thesis/verification-2026-09-22.log' -Force | Out-Null; & '.\scripts\verify-all.cmd'; $verificationExit=$LASTEXITCODE; Write-Output "VERIFICATION_EXIT_CODE=$verificationExit"; Stop-Transcript | Out-Null; exit $verificationExit
+Process ID: 35712
+PSVersion: 5.1.26100.9444
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9444
+BuildVersion: 10.0.26100.9444
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+VERIFICATION_EXIT_CODE=1
+**********************
+Windows PowerShell transcript end
+End time: 20260922122037
+**********************

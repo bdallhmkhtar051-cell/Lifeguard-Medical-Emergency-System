@@ -73,6 +73,7 @@ internal sealed class DemoDataSeeder(
             {
                 Id = Guid.NewGuid(),
                 UserId = patient.Id,
+                EmergencyMedicalId = Guid.NewGuid(),
                 FullName = _options.Patient.DisplayName.Trim(),
                 DateOfBirth = new DateOnly(1997, 4, 12),
                 BloodGroup = BloodGroup.OPositive,

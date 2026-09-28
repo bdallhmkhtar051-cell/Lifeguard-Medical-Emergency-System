@@ -16,6 +16,7 @@ class PatientMedicalIdHeader extends StatelessWidget {
     required this.onEdit,
     required this.onRefresh,
     required this.onDisplayQr,
+    required this.onDisplayEmergencyQr,
     super.key,
   });
 
@@ -23,6 +24,7 @@ class PatientMedicalIdHeader extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onRefresh;
   final VoidCallback onDisplayQr;
+  final VoidCallback onDisplayEmergencyQr;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +87,7 @@ class PatientMedicalIdHeader extends StatelessWidget {
                       profile: profile,
                       onRefresh: onRefresh,
                       onDisplayQr: onDisplayQr,
+                      onDisplayEmergencyQr: onDisplayEmergencyQr,
                     ),
                   ],
                 ),
@@ -224,19 +227,23 @@ class _Actions extends StatelessWidget {
     required this.profile,
     required this.onRefresh,
     required this.onDisplayQr,
+    required this.onDisplayEmergencyQr,
   });
 
   final EmergencyProfile profile;
   final VoidCallback onRefresh;
   final VoidCallback onDisplayQr;
+  final VoidCallback onDisplayEmergencyQr;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        final columns = box.maxWidth >= 900 ? 5 : (box.maxWidth >= 520 ? 3 : 1);
+        final columns = box.maxWidth >= 1050
+            ? 6
+            : (box.maxWidth >= 520 ? 3 : 1);
         final aspectRatio = switch (columns) {
-          5 => 2.1,
+          6 => 1.75,
           3 => 2.6,
           _ => 5.0,
         };
@@ -266,12 +273,20 @@ class _Actions extends StatelessWidget {
               onTap: onRefresh,
             ),
             _ActionTile(
-              eyebrow: 'Medical ID',
-              label: 'Display QR',
+              eyebrow: 'Consent access',
+              label: 'Temporary QR',
               icon: Icons.qr_code_2,
               color: _blue,
               borderColor: const Color(0x665B9CF6),
               onTap: onDisplayQr,
+            ),
+            _ActionTile(
+              eyebrow: 'Emergency ID',
+              label: 'Permanent QR',
+              icon: Icons.badge_outlined,
+              color: const Color(0xA60F766E),
+              borderColor: const Color(0x665EEAD4),
+              onTap: onDisplayEmergencyQr,
             ),
             _ActionTile(
               eyebrow: 'Summary',

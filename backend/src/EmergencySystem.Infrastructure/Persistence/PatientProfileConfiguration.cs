@@ -28,6 +28,7 @@ internal sealed class PatientProfileConfiguration
         builder.Property(profile => profile.UpdatedAtUtc).HasPrecision(0);
         builder.Property(profile => profile.Version).IsConcurrencyToken();
         builder.HasIndex(profile => profile.UserId).IsUnique();
+        builder.HasIndex(profile => profile.EmergencyMedicalId).IsUnique();
 
         builder.HasOne<ApplicationUser>()
             .WithOne()

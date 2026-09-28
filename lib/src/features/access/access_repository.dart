@@ -12,6 +12,11 @@ abstract interface class AccessRepository {
   Future<void> revoke(String grantId);
   Future<MedicalQrAccess> issueMedicalQr();
   Future<void> revokeMedicalQr();
+  Future<EmergencyMedicalId> emergencyMedicalId();
+  Future<EmergencyMedicalId> rotateEmergencyMedicalId();
+  Future<EmergencyPatientIdentification> identifyEmergencyPatient(
+    String qrPayload,
+  );
   Future<List<DoctorAccess>> doctorAccess();
   Future<List<DoctorPatient>> doctorDirectory();
   Future<DoctorAccess> breakGlass({
@@ -27,6 +32,8 @@ class ApiAccessRepository implements AccessRepository {
   ApiAccessRepository(this._api);
   static const _patientPath = '/api/v1/patients/me/emergency-access';
   static const _patientQrPath = '/api/v1/patients/me/medical-qr';
+  static const _emergencyMedicalIdPath =
+      '/api/v1/patients/me/emergency-medical-id';
   static const _doctorPath = '/api/v1/doctors/emergency-access';
   final ApiClient _api;
 
@@ -93,6 +100,46 @@ class ApiAccessRepository implements AccessRepository {
   @override
   Future<void> revokeMedicalQr() async {
     await _api.postJson('$_patientQrPath/revoke');
+  }
+
+  @override
+  Future<EmergencyMedicalId> emergencyMedicalId() async {
+    try {
+      return EmergencyMedicalId.fromJson(
+        (await _api.getJson(_emergencyMedicalIdPath)).requireObject(),
+      );
+    } on FormatException {
+      throw const ApiException.protocol();
+    }
+  }
+
+  @override
+  Future<EmergencyMedicalId> rotateEmergencyMedicalId() async {
+    try {
+      return EmergencyMedicalId.fromJson(
+        (await _api.postJson(
+          '$_emergencyMedicalIdPath/rotate',
+        )).requireObject(),
+      );
+    } on FormatException {
+      throw const ApiException.protocol();
+    }
+  }
+
+  @override
+  Future<EmergencyPatientIdentification> identifyEmergencyPatient(
+    String qrPayload,
+  ) async {
+    try {
+      return EmergencyPatientIdentification.fromJson(
+        (await _api.postJson(
+          '$_doctorPath/medical-qr/identify-emergency',
+          body: {'qrPayload': qrPayload},
+        )).requireObject(),
+      );
+    } on FormatException {
+      throw const ApiException.protocol();
+    }
   }
 
   @override

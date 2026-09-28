@@ -78,13 +78,21 @@ void main() {
     await tester.pumpWidget(harness.app);
 
     await tester.tap(find.byKey(const ValueKey('biometric-simulation-button')));
-    await tester.pumpAndSettle();
+    // The face camera's loading spinner animates continuously without a real
+    // camera in widget tests. Finish the dialog transition, not camera loading.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(
       find.byKey(const ValueKey('biometric-simulation-dialog')),
       findsOneWidget,
     );
     expect(find.textContaining('Thesis demonstration only'), findsOneWidget);
+
+    // Use the visual-only fingerprint path in widget tests. The production
+    // face path requests a real browser camera and is verified manually.
+    await tester.tap(find.text('Fingerprint'));
+    await tester.pumpAndSettle();
 
     final failureButton = find.byKey(
       const ValueKey('simulate-biometric-failure'),
@@ -101,6 +109,12 @@ void main() {
     await tester.tap(startButton);
     await tester.pump(const Duration(milliseconds: 1900));
     expect(find.text('Biometric verification successful'), findsOneWidget);
+    expect(auth.loginCalls, 0);
+    expect(harness.sessionController.status, SessionStatus.signedOut);
+    await tester.tap(find.text('Continue to password sign-in'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('biometric-simulation-dialog')), findsNothing);
+    expect(find.byKey(const ValueKey('login-button')), findsOneWidget);
     expect(auth.loginCalls, 0);
     expect(harness.sessionController.status, SessionStatus.signedOut);
   });

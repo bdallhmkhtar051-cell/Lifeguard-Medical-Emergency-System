@@ -59,6 +59,39 @@ class MedicalQrAccess {
   final DateTime expiresAt;
 }
 
+/// A stable public identifier that can be printed on an emergency card.
+/// It identifies the patient but never grants access to medical information.
+class EmergencyMedicalId {
+  const EmergencyMedicalId({required this.id, required this.qrPayload});
+
+  factory EmergencyMedicalId.fromJson(Map<String, dynamic> json) =>
+      EmergencyMedicalId(
+        id: json['emergencyMedicalId'].toString(),
+        qrPayload: json['qrPayload'].toString(),
+      );
+
+  final String id;
+  final String qrPayload;
+}
+
+/// Minimal identity returned after a doctor scans a permanent emergency QR.
+/// It deliberately contains no clinical information and no access grant.
+class EmergencyPatientIdentification {
+  const EmergencyPatientIdentification({
+    required this.patientProfileId,
+    required this.patientName,
+  });
+
+  factory EmergencyPatientIdentification.fromJson(Map<String, dynamic> json) =>
+      EmergencyPatientIdentification(
+        patientProfileId: json['patientProfileId'].toString(),
+        patientName: json['patientName'].toString(),
+      );
+
+  final String patientProfileId;
+  final String patientName;
+}
+
 class DoctorPatient {
   const DoctorPatient({required this.id, required this.name});
   factory DoctorPatient.fromJson(Map<String, dynamic> json) => DoctorPatient(

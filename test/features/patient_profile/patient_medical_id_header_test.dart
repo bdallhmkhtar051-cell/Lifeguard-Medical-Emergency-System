@@ -21,6 +21,7 @@ void main() {
               onEdit: () => editCalls++,
               onRefresh: () {},
               onDisplayQr: () {},
+              onDisplayEmergencyQr: () {},
             ),
           ),
         ),
@@ -30,7 +31,8 @@ void main() {
     expect(find.text('Amina Yusuf'), findsOneWidget);
     expect(find.text('O+'), findsOneWidget);
     expect(find.text('Restricted'), findsOneWidget);
-    expect(find.text('Display QR'), findsOneWidget);
+    expect(find.text('Temporary QR'), findsOneWidget);
+    expect(find.text('Permanent QR'), findsOneWidget);
     expect(find.text('View ICE'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
@@ -47,6 +49,7 @@ void main() {
             onEdit: () {},
             onRefresh: () {},
             onDisplayQr: () {},
+            onDisplayEmergencyQr: () {},
           ),
         ),
       ),

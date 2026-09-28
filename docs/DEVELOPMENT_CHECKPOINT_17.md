@@ -6,8 +6,9 @@ Date: 2026-09-13
 
 The login experience now provides separate face-recognition and fingerprint
 visualizations. Both show ready, animated scanning, success, and unsuccessful
-states. They are thesis simulations only: they do not activate a camera or
-fingerprint reader, store biometric data, or create an authenticated session.
+states. They are thesis simulations only. Checkpoint 19 later added a live
+front-camera preview to face mode, but neither mode performs biometric
+matching, stores biometric data, or creates an authenticated session.
 
 An authorized doctor can now attach a real PDF, JPEG, or PNG clinical document
 to the open patient's record. Available categories include discharge summary,

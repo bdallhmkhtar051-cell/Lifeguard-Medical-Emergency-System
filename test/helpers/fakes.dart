@@ -207,14 +207,25 @@ class FakePatientProfileRepository implements PatientProfileRepository {
 }
 
 class FakeAccessRepository implements AccessRepository {
-  FakeAccessRepository({this.qrAccess});
+  FakeAccessRepository({
+    this.qrAccess,
+    List<DoctorAccess>? activeAccess,
+    this.patientAccessDashboard,
+  }) : activeDoctorAccess = activeAccess ?? <DoctorAccess>[];
 
   final DoctorAccess? qrAccess;
+  List<DoctorAccess> activeDoctorAccess;
+  final PatientAccessDashboard? patientAccessDashboard;
+  bool rejectDoctorSnapshot = false;
   int grantCalls = 0;
   int revokeCalls = 0;
   int qrIssueCalls = 0;
   int qrRevokeCalls = 0;
+  int emergencyMedicalIdCalls = 0;
+  int emergencyMedicalIdRotateCalls = 0;
   String? redeemedQrToken;
+  String? identifiedEmergencyQrPayload;
+  String? breakGlassReason;
   int aiSummaryCalls = 0;
   final doctor = const DoctorOption(
     id: 'doctor-user-id',
@@ -247,6 +258,7 @@ class FakeAccessRepository implements AccessRepository {
 
   @override
   Future<PatientAccessDashboard> patientDashboard() async =>
+      patientAccessDashboard ??
       PatientAccessDashboard(
         doctors: [doctor],
         grants: const [],
@@ -281,7 +293,36 @@ class FakeAccessRepository implements AccessRepository {
   }
 
   @override
-  Future<List<DoctorAccess>> doctorAccess() async => const [];
+  Future<EmergencyMedicalId> emergencyMedicalId() async {
+    emergencyMedicalIdCalls++;
+    return const EmergencyMedicalId(
+      id: '01234567-89ab-cdef-0123-456789abcdef',
+      qrPayload: 'LIFEGUARD:EMERGENCY:1:0123456789abcdef0123456789abcdef',
+    );
+  }
+
+  @override
+  Future<EmergencyMedicalId> rotateEmergencyMedicalId() async {
+    emergencyMedicalIdRotateCalls++;
+    return const EmergencyMedicalId(
+      id: 'fedcba98-7654-3210-fedc-ba9876543210',
+      qrPayload: 'LIFEGUARD:EMERGENCY:1:fedcba9876543210fedcba9876543210',
+    );
+  }
+
+  @override
+  Future<EmergencyPatientIdentification> identifyEmergencyPatient(
+    String qrPayload,
+  ) async {
+    identifiedEmergencyQrPayload = qrPayload;
+    return EmergencyPatientIdentification(
+      patientProfileId: sampleProfile.id,
+      patientName: sampleProfile.fullName,
+    );
+  }
+
+  @override
+  Future<List<DoctorAccess>> doctorAccess() async => activeDoctorAccess;
 
   @override
   Future<List<DoctorPatient>> doctorDirectory() async => const [];
@@ -290,7 +331,17 @@ class FakeAccessRepository implements AccessRepository {
   Future<DoctorAccess> breakGlass({
     required String patientProfileId,
     required String reason,
-  }) => throw StateError('No fake break-glass access configured.');
+  }) async {
+    breakGlassReason = reason;
+    return DoctorAccess(
+      id: 'emergency-grant-id',
+      patientProfileId: patientProfileId,
+      patientName: sampleProfile.fullName,
+      expiresAt: DateTime.now().add(const Duration(minutes: 15)),
+      accessType: EmergencyAccessKind.breakGlass,
+      emergencyReason: reason,
+    );
+  }
 
   @override
   Future<DoctorAccess> redeemMedicalQr(String token) async {
@@ -301,12 +352,20 @@ class FakeAccessRepository implements AccessRepository {
 
   @override
   Future<DoctorSnapshot> doctorSnapshot(String grantId) async {
+    if (rejectDoctorSnapshot) {
+      throw const ApiException(
+        kind: ApiErrorKind.notFound,
+        message: 'The access grant is no longer active.',
+        statusCode: 404,
+      );
+    }
     final access = qrAccess;
-    if (access == null) throw StateError('No fake snapshot configured.');
     return DoctorSnapshot(
-      expiresAt: access.expiresAt,
+      expiresAt:
+          access?.expiresAt ?? DateTime.now().add(const Duration(minutes: 15)),
       profile: sampleProfile,
-      accessType: access.accessType,
+      accessType: access?.accessType ?? EmergencyAccessKind.breakGlass,
+      emergencyReason: access?.emergencyReason ?? breakGlassReason,
     );
   }
 

@@ -556,6 +556,23 @@ public sealed class ApiIntegrationTests
         Assert.Equal(HttpStatusCode.OK, snapshotResponse.StatusCode);
         Assert.Equal(EmergencyAccessType.BreakGlass, snapshot?.AccessType);
         Assert.Equal(reason, snapshot?.EmergencyReason);
+        Assert.NotNull(snapshot?.Profile);
+        Assert.Null(snapshot.Profile.PrimaryPhysicianName);
+        Assert.Null(snapshot.Profile.PrimaryPhysicianPhone);
+        Assert.Null(snapshot.Profile.InsuranceProvider);
+        Assert.Null(snapshot.Profile.InsurancePolicyNumber);
+        Assert.True(snapshot.Profile.EmergencyContacts.Count <= 1);
+
+        var clinicalHistory = await doctorClient.GetAsync(
+            $"/api/v1/doctors/emergency-access/{emergencyAccess.GrantId}/clinical-records");
+        var documents = await doctorClient.GetAsync(
+            $"/api/v1/doctors/emergency-access/{emergencyAccess.GrantId}/documents");
+        var aiSummary = await doctorClient.PostAsync(
+            $"/api/v1/doctors/emergency-access/{emergencyAccess.GrantId}/ai-summary",
+            content: null);
+        Assert.Equal(HttpStatusCode.NotFound, clinicalHistory.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, documents.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, aiSummary.StatusCode);
 
         var dashboard = await patientClient
             .GetFromJsonAsync<PatientAccessDashboardResponse>(
@@ -647,6 +664,97 @@ public sealed class ApiIntegrationTests
         Assert.Contains(
             dashboard!.AuditHistory,
             item => item.Action == AccessAuditAction.QrRedeemed);
+    }
+
+    [Fact]
+    public async Task Permanent_emergency_qr_identifies_without_granting_access()
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var anonymousClient = CreateClient(factory);
+        using var patientClient = CreateClient(factory);
+        using var doctorClient = CreateClient(factory);
+        using var administratorClient = CreateClient(factory);
+        await LoginAsync(patientClient, EmergencySystemApiFactory.PatientEmail);
+        await LoginAsync(doctorClient, EmergencySystemApiFactory.DoctorEmail);
+        await LoginAsync(
+            administratorClient,
+            EmergencySystemApiFactory.AdministratorEmail);
+
+        var permanentId = await patientClient
+            .GetFromJsonAsync<EmergencyMedicalIdResponse>(
+                "/api/v1/patients/me/emergency-medical-id",
+                JsonOptions);
+        Assert.NotNull(permanentId);
+        Assert.StartsWith(PermanentEmergencyQrPayload.Prefix, permanentId.QrPayload);
+
+        var anonymousResolve = await anonymousClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/identify-emergency",
+            new ResolveEmergencyMedicalIdRequest(permanentId.QrPayload),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymousResolve.StatusCode);
+
+        var patientResolve = await patientClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/identify-emergency",
+            new ResolveEmergencyMedicalIdRequest(permanentId.QrPayload),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.Forbidden, patientResolve.StatusCode);
+
+        var administratorResolve = await administratorClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/identify-emergency",
+            new ResolveEmergencyMedicalIdRequest(permanentId.QrPayload),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.Forbidden, administratorResolve.StatusCode);
+
+        var resolve = await doctorClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/identify-emergency",
+            new ResolveEmergencyMedicalIdRequest(permanentId.QrPayload),
+            JsonOptions);
+        var identity = await resolve.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(HttpStatusCode.OK, resolve.StatusCode);
+        Assert.Equal("Test Patient", identity.GetProperty("patientName").GetString());
+        var returnedProperties = identity.EnumerateObject()
+            .Select(item => item.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        Assert.Equal(2, returnedProperties.Count);
+        Assert.Contains("patientProfileId", returnedProperties);
+        Assert.Contains("patientName", returnedProperties);
+
+        var access = await doctorClient.GetFromJsonAsync<DoctorAccessResponse[]>(
+            "/api/v1/doctors/emergency-access",
+            JsonOptions);
+        Assert.Empty(Assert.IsType<DoctorAccessResponse[]>(access));
+
+        var doctorReadsPatientId = await doctorClient.GetAsync(
+            "/api/v1/patients/me/emergency-medical-id");
+        Assert.Equal(HttpStatusCode.Forbidden, doctorReadsPatientId.StatusCode);
+
+        var rotatedResponse = await patientClient.PostAsync(
+            "/api/v1/patients/me/emergency-medical-id/rotate",
+            null);
+        var rotated = await rotatedResponse.Content
+            .ReadFromJsonAsync<EmergencyMedicalIdResponse>(JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, rotatedResponse.StatusCode);
+        Assert.NotNull(rotated);
+        Assert.NotEqual(permanentId.EmergencyMedicalId, rotated.EmergencyMedicalId);
+
+        var oldIdentifier = await doctorClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/identify-emergency",
+            new ResolveEmergencyMedicalIdRequest(permanentId.QrPayload),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.NotFound, oldIdentifier.StatusCode);
+
+        var newIdentifier = await doctorClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/identify-emergency",
+            new ResolveEmergencyMedicalIdRequest(rotated.QrPayload),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, newIdentifier.StatusCode);
+
+        var malformed = await doctorClient.PostAsJsonAsync(
+            "/api/v1/doctors/emergency-access/medical-qr/identify-emergency",
+            new ResolveEmergencyMedicalIdRequest("not-a-lifeguard-qr"),
+            JsonOptions);
+        Assert.Equal(HttpStatusCode.NotFound, malformed.StatusCode);
     }
 
     [Fact]

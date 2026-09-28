@@ -9,6 +9,20 @@ public sealed record BreakGlassAccessRequest(Guid PatientProfileId, string? Reas
 
 public sealed record RedeemMedicalQrRequest(string? Token);
 
+public sealed record ResolveEmergencyMedicalIdRequest(string? QrPayload);
+
+public sealed record EmergencyMedicalIdResponse(
+    Guid EmergencyMedicalId,
+    string QrPayload);
+
+/// <summary>
+/// Minimal identity confirmation returned before break-glass authorization.
+/// It deliberately contains no clinical or contact information.
+/// </summary>
+public sealed record EmergencyPatientIdentificationResponse(
+    Guid PatientProfileId,
+    string PatientName);
+
 public sealed record MedicalQrIssueResponse(
     string Token,
     DateTimeOffset ExpiresAtUtc);
@@ -55,3 +69,31 @@ public sealed record DoctorEmergencySnapshotResponse(
     EmergencyAccessType AccessType,
     string? EmergencyReason,
     EmergencyProfileResponse Profile);
+
+/// <summary>
+/// Versioned permanent QR contract. This payload identifies a patient only;
+/// possession of it is never evidence of consent or authorization.
+/// </summary>
+public static class PermanentEmergencyQrPayload
+{
+    public const string Prefix = "LIFEGUARD:EMERGENCY:1:";
+
+    public static string Create(Guid emergencyMedicalId) =>
+        $"{Prefix}{emergencyMedicalId:N}";
+
+    public static bool TryParse(string? payload, out Guid emergencyMedicalId)
+    {
+        emergencyMedicalId = Guid.Empty;
+        var value = payload?.Trim();
+        if (value is null ||
+            !value.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var identifier = value[Prefix.Length..];
+        return identifier.Length == 32 &&
+               Guid.TryParseExact(identifier, "N", out emergencyMedicalId) &&
+               emergencyMedicalId != Guid.Empty;
+    }
+}

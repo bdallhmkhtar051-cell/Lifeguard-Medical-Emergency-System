@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 enum _SimulationState { ready, scanning, succeeded, failed }
 
 enum _BiometricMethod { face, fingerprint }
 
-/// Visual thesis demonstration; no real biometric information is accessed.
+/// Camera-backed face visualization and visual fingerprint thesis simulation.
+/// Neither method performs biometric matching or creates a user session.
 class BiometricSimulationDialog extends StatefulWidget {
   const BiometricSimulationDialog({super.key});
 
@@ -25,11 +29,19 @@ class _BiometricSimulationDialogState extends State<BiometricSimulationDialog>
     vsync: this,
     duration: const Duration(milliseconds: 950),
   );
+  late final MobileScannerController _faceCamera = MobileScannerController(
+    autoStart: true,
+    facing: CameraFacing.front,
+    detectionSpeed: DetectionSpeed.noDuplicates,
+  );
   _SimulationState _state = _SimulationState.ready;
   _BiometricMethod _method = _BiometricMethod.face;
+  bool _cameraFailed = false;
+  String? _cameraError;
 
   @override
   void dispose() {
+    unawaited(_faceCamera.dispose());
     _scanner.dispose();
     super.dispose();
   }
@@ -40,21 +52,48 @@ class _BiometricSimulationDialogState extends State<BiometricSimulationDialog>
     setState(() {
       _method = value;
       _state = _SimulationState.ready;
+      _cameraFailed = false;
+      _cameraError = null;
     });
+    // MobileScanner starts automatically whenever the face preview is mounted.
+    // Stop it explicitly when the visual-only fingerprint tab is selected.
+    if (value == _BiometricMethod.fingerprint) {
+      unawaited(_faceCamera.stop());
+    }
   }
 
   Future<void> _scan({required bool succeeds}) async {
     if (_state == _SimulationState.scanning) return;
-    setState(() => _state = _SimulationState.scanning);
+    setState(() {
+      _state = _SimulationState.scanning;
+      _cameraFailed = false;
+      _cameraError = null;
+    });
     _scanner.repeat(reverse: true);
-    await Future<void>.delayed(const Duration(milliseconds: 1800));
+    await Future<void>.delayed(
+      Duration(milliseconds: _method == _BiometricMethod.face ? 3200 : 1800),
+    );
     if (!mounted) return;
+    if (_cameraFailed) return;
     _scanner.stop();
     setState(
       () => _state = succeeds
           ? _SimulationState.succeeded
           : _SimulationState.failed,
     );
+  }
+
+  void _handleCameraError(MobileScannerException error) {
+    if (_cameraFailed || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _cameraFailed) return;
+      _scanner.stop();
+      setState(() {
+        _cameraFailed = true;
+        _cameraError = error.errorCode.message;
+        _state = _SimulationState.failed;
+      });
+    });
   }
 
   @override
@@ -135,6 +174,8 @@ class _BiometricSimulationDialogState extends State<BiometricSimulationDialog>
                   method: _method,
                   state: _state,
                   animation: _scanner,
+                  faceCamera: _faceCamera,
+                  onCameraError: _handleCameraError,
                 ),
               ),
               const SizedBox(height: 18),
@@ -148,13 +189,30 @@ class _BiometricSimulationDialogState extends State<BiometricSimulationDialog>
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Thesis demonstration only: the camera and fingerprint reader '
-                'are not accessed, no biometric data is saved, and password '
-                'sign-in remains required.',
+              Text(
+                _method == _BiometricMethod.face
+                    ? 'Thesis demonstration only: the live camera preview is '
+                          'shown during scanning, but no face recognition is '
+                          'performed and no image or video is saved. Password '
+                          'sign-in remains required.'
+                    : 'Thesis demonstration only: the fingerprint reader is '
+                          'not accessed, no biometric data is saved, and '
+                          'password sign-in remains required.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
               ),
+              if (_cameraError case final message?) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Camera unavailable: $message Allow camera permission in '
+                  'Chrome, then try again.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
               const SizedBox(height: 18),
               if (!succeeded)
                 FilledButton.icon(
@@ -216,10 +274,14 @@ class _ScanStage extends StatelessWidget {
     required this.method,
     required this.state,
     required this.animation,
+    required this.faceCamera,
+    required this.onCameraError,
   });
   final _BiometricMethod method;
   final _SimulationState state;
   final Animation<double> animation;
+  final MobileScannerController faceCamera;
+  final ValueChanged<MobileScannerException> onCameraError;
 
   @override
   Widget build(BuildContext context) {
@@ -243,9 +305,33 @@ class _ScanStage extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Keep the real preview visible for the complete face-simulation
+          // screen. The animation below is only a visual demonstration.
+          if (method == _BiometricMethod.face)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: MobileScanner(
+                  controller: faceCamera,
+                  onDetect: (_) {},
+                  errorBuilder: (_, error) {
+                    onCameraError(error);
+                    return const _FaceCameraUnavailable();
+                  },
+                  placeholderBuilder: (_) => const ColoredBox(
+                    color: Color(0xFF071426),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+              ),
+            ),
           Positioned.fill(child: CustomPaint(painter: _GridPainter())),
           if (method == _BiometricMethod.face)
-            _FaceScanner(animation: animation, scanning: scanning)
+            _FaceScanner(
+              animation: animation,
+              scanning: scanning,
+              showGuideIcon: !scanning,
+            )
           else
             _FingerprintScanner(animation: animation, scanning: scanning),
           if (succeeded)
@@ -292,9 +378,14 @@ class _ScanStage extends StatelessWidget {
 }
 
 class _FaceScanner extends StatelessWidget {
-  const _FaceScanner({required this.animation, required this.scanning});
+  const _FaceScanner({
+    required this.animation,
+    required this.scanning,
+    required this.showGuideIcon,
+  });
   final Animation<double> animation;
   final bool scanning;
+  final bool showGuideIcon;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -309,11 +400,12 @@ class _FaceScanner extends StatelessWidget {
             borderRadius: BorderRadius.circular(46),
           ),
         ),
-        const Icon(
-          Icons.face_retouching_natural_outlined,
-          color: Color(0xFF7DD3FC),
-          size: 126,
-        ),
+        if (showGuideIcon)
+          const Icon(
+            Icons.face_retouching_natural_outlined,
+            color: Color(0xFF7DD3FC),
+            size: 126,
+          ),
         if (scanning)
           AnimatedBuilder(
             animation: animation,
@@ -334,6 +426,22 @@ class _FaceScanner extends StatelessWidget {
             ),
           ),
       ],
+    ),
+  );
+}
+
+class _FaceCameraUnavailable extends StatelessWidget {
+  const _FaceCameraUnavailable();
+
+  @override
+  Widget build(BuildContext context) => const ColoredBox(
+    color: Color(0xFF071426),
+    child: Center(
+      child: Icon(
+        Icons.no_photography_outlined,
+        color: Color(0xFFBAE6FD),
+        size: 64,
+      ),
     ),
   );
 }

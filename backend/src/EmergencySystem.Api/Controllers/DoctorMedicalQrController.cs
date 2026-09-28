@@ -26,4 +26,17 @@ public sealed class DoctorMedicalQrController(IEmergencyAccessService accessServ
             doctorId, request, cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
+
+    [HttpPost("identify-emergency")]
+    [EnableRateLimiting(RateLimitPolicyNames.MedicalQr)]
+    public async Task<ActionResult<EmergencyPatientIdentificationResponse>>
+        IdentifyEmergencyPatient(
+            ResolveEmergencyMedicalIdRequest request,
+            CancellationToken cancellationToken)
+    {
+        var result = await accessService.ResolveEmergencyMedicalIdAsync(
+            request,
+            cancellationToken);
+        return result is null ? NotFound() : Ok(result);
+    }
 }

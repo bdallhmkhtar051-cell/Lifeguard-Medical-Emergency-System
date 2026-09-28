@@ -69,3 +69,18 @@ key.properties
 
 # Backend credentials must never be stored in the Flutter client repository
 *service-account*.json
+
+# Local generated exports, browser profiles and publication assets
+/output/
+/LifeGuard_Thesis_Handover.pdf
+/thesis/*.docx
+/thesis/*.zip
+/thesis/screenshots/
+/thesis/*HANDOVER*.md
+/docs/UPDATE_HANDOVER_*.md
+/docs/TECHNICAL_HANDOVER.md
+/thesis/CHAPTER_5_EVIDENCE_SUPPLEMENT.md
+/thesis/THESIS_REVISION_GUIDE_*.md
+
+# Preserve dated verification transcripts as repository evidence
+!/thesis/verification-*.log

@@ -53,6 +53,16 @@ void main() {
     expect(repository.receivedReason, reason);
     expect(find.textContaining('BREAK-GLASS EMERGENCY'), findsOneWidget);
     expect(find.textContaining(reason), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('break-glass-emergency-summary')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('generate-ai-summary')), findsNothing);
+    expect(find.text('CLINICAL TOOLS'), findsNothing);
+    expect(find.textContaining('Emergency-only view'), findsOneWidget);
+    expect(find.text('ACTIVE EMERGENCY SUMMARY'), findsOneWidget);
+    expect(find.textContaining('MINIMUM NECESSARY VIEW'), findsOneWidget);
+    expect(find.textContaining('DOCUMENTATION ENABLED'), findsNothing);
   });
 
   testWidgets('doctor can search and filter the patient directory', (
@@ -200,6 +210,18 @@ class _BreakGlassRepository implements AccessRepository {
 
   @override
   Future<void> revokeMedicalQr() => throw UnimplementedError();
+
+  @override
+  Future<EmergencyMedicalId> emergencyMedicalId() => throw UnimplementedError();
+
+  @override
+  Future<EmergencyMedicalId> rotateEmergencyMedicalId() =>
+      throw UnimplementedError();
+
+  @override
+  Future<EmergencyPatientIdentification> identifyEmergencyPatient(
+    String qrPayload,
+  ) => throw UnimplementedError();
 
   @override
   Future<DoctorAccess> redeemMedicalQr(String token) =>
