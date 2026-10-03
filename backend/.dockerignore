@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/TestResults/
+tests/
+artifacts/
+.vs/
+.env
+.env.*
+*.bak
+*.pfx
+*.pem
+*.publishSettings
+**/appsettings.Development.json

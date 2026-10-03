@@ -8,6 +8,14 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var deploymentPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(deploymentPort))
+{
+    if (!int.TryParse(deploymentPort, out var port) || port is <= 0 or > 65535)
+        throw new InvalidOperationException("PORT must be a valid TCP port.");
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 builder.WebHost.ConfigureKestrel(options =>
 {
     // The first slice accepts only small JSON documents; uploads will receive a
