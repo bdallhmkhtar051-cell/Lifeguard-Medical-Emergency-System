@@ -49,7 +49,7 @@ internal sealed class EmergencySystemApiFactory : WebApplicationFactory<Program>
                     ["Jwt:Audience"] = "EmergencySystem.Api.Tests.Client",
                     ["Jwt:SigningKey"] =
                         "test-only-signing-key-with-at-least-sixty-four-characters-123456789",
-                    ["Jwt:AccessTokenMinutes"] = "15",
+                    ["Jwt:AccessTokenMinutes"] = "40",
                     ["Cors:AllowedOrigins:0"] = "http://localhost:5000",
                     ["DemoSeed:Enabled"] = "false",
                     ["AllowedHosts"] = "*",

@@ -64,6 +64,10 @@ void main() {
       expect(controller.status, SessionStatus.signedIn);
       expect(controller.user, samplePatient);
       expect(
+        controller.expiresAtUtc!.difference(DateTime.now().toUtc()).inSeconds,
+        inInclusiveRange(2398, 2400),
+      );
+      expect(
         _header(protectedRequest, 'authorization'),
         'Bearer test-access-token',
       );

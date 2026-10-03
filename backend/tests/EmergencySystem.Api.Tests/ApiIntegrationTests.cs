@@ -59,7 +59,22 @@ public sealed class ApiIntegrationTests
         Assert.Contains(RoleNames.Patient, currentUser.Roles);
         Assert.True(currentUser.HasEmergencyProfile);
         Assert.Equal("Bearer", login.TokenType);
-        Assert.InRange(login.ExpiresInSeconds, 850, 900);
+        Assert.Equal(40 * 60, login.ExpiresInSeconds);
+    }
+
+    [Theory]
+    [InlineData(EmergencySystemApiFactory.PatientEmail)]
+    [InlineData(EmergencySystemApiFactory.DoctorEmail)]
+    [InlineData(EmergencySystemApiFactory.AdministratorEmail)]
+    public async Task Every_role_receives_a_40_minute_login_token(string email)
+    {
+        using var factory = new EmergencySystemApiFactory();
+        await factory.InitializeAsync();
+        using var client = CreateClient(factory);
+
+        var login = await LoginAsync(client, email);
+
+        Assert.Equal(40 * 60, login.ExpiresInSeconds);
     }
 
     [Fact]

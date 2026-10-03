@@ -150,7 +150,7 @@ class FakeAuthRepository implements AuthRepository {
     return LoginResult(
       accessToken: 'test-access-token',
       tokenType: 'Bearer',
-      expiresInSeconds: 900,
+      expiresInSeconds: 2400,
       user: user,
     );
   }
