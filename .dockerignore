@@ -1,0 +1,12 @@
+# Send only the Flutter frontend inputs to the Railway build. In particular,
+# never include local configuration, databases, screenshots, or Git metadata.
+*
+!Dockerfile
+!pubspec.yaml
+!pubspec.lock
+!lib
+!lib/**
+!web
+!web/**
+!hosting
+!hosting/flutter-nginx.conf
